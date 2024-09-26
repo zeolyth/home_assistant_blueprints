@@ -15,7 +15,7 @@ blueprint:
     The script is based on the [Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints) project.
     
     Version 2024.09.26
-  source_url: https://github.com/zsolthy/home_assistant_blueprints/blob/hook_lights_advanced.yaml
+  source_url: https://github.com/zsolthy/home_assistant_blueprints/blob/main/hook_lights_advanced.yaml
   domain: automation
   homeassistant:
     min_version: 2024.6.0
