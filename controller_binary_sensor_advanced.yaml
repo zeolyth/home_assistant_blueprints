@@ -1,11 +1,13 @@
 # Blueprint metadata
 blueprint:
-  name: Advanced Controller for IKEA E1525/E1745 TRÅDFRI Motion Sensor
+  name: Advanced Controller for Binary (On/Off) Sensor
   description: |
-    Automation for executing on and off actions for Advanced Controller for IKEA E1525/E1745 TRÅDFRI Motion Sensor.
+    Automation for executing on and off actions for any binary sensor, for example motion detectors.
     The blueprint uses entities and is compatible with Zigbee2MQTT.
     
     **Inputs marked with * are mandatory.**
+    
+    Trun off the *"Clear" (off) state unique actions / Enbale controller event for "clear" (off) state* toggle if you dont want to send a turn off signal to controlled device(s)
     
     Automations created with this blueprint can be connected with one or more of [my] (https://github.com/zsolthy/home_assistant_blueprints/) or [Awesome HA Blueprints'] (https://epmatt.github.io/awesome-ha-blueprints/docs/blueprints/hooks) hooks.
     Hooks allow to easily create controller-based automations for interacting with media players, lights, covers and more.
@@ -15,7 +17,7 @@ blueprint:
     The script is based on the [Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints) project.
     
     Version 2024.09.27
-  source_url: https://github.com/zsolthy/home_assistant_blueprints/blob/main/controller_ikea_e1525_e1745_advanced.yaml
+  source_url: https://github.com/zsolthy/home_assistant_blueprints/blob/main/controller_binary_sensor_advanced.yaml
   domain: automation
   homeassistant:
     min_version: 2024.6.0
@@ -25,42 +27,45 @@ blueprint:
       input:
         controller_entity:
           name: Controller entity*
-          description: The occupancy sensor of the controller to use for the automation
+          description: The binary sensor to use for the automation
           default: ''
           selector:
             entity:
               domain: binary_sensor
     # state_on actions
     state_on:
-      name: '"Detected" (on) state unique actions'
+      name: On state unique actions
       collapsed: true
       input:
         action_state_on_trigger:
-          name: 'Enbale controller event for "detected" (on) state'
+          name: Enbale controller event for on state
           description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
           default: true
           selector:
             boolean:
         action_state_on:
-          name: '"Detected" state action(s)'
-          description: 'Action(s) to run on "detected" (on) state.'
+          name: On state action(s)
+          description: Action(s) to run on on state.
           default: []
           selector:
             action:
     # state_off actions
     state_off:
-      name: '"Clear" (off) state unique actions'
+      name: Off state unique actions
       collapsed: true
       input:
         action_state_off_trigger:
-          name: 'Enbale controller event for "clear" (off) state'
-          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          name: Enbale controller event for off state
+          description: |-
+            If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+            
+            Trun it off if you dont want to send a turn off signal to controlled device(s)
           default: true
           selector:
             boolean:
         action_state_off:
-          name: '"Clear" (off) state action(s)'
-          description: 'Action(s) to run on "clear" (off) state.'
+          name: Off state action(s)
+          description: Action(s) to run on off state.
           default: []
           selector:
             action:
@@ -69,7 +74,7 @@ variables:
   # build data to send within a controller event
   controller_entity: !input controller_entity
   controller_id: '{{controller_entity}}'
-  controller_model: IKEA E1525/E1745 TRÅDFRI Motion Sensor
+  controller_model: Binary Sensor
   # state variables
   action_state_on_trigger: !input action_state_on_trigger
   action_state_off_trigger: !input action_state_off_trigger
