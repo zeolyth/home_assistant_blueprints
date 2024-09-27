@@ -1,0 +1,132 @@
+# Blueprint metadata
+blueprint:
+  name: Advanced Controller for IKEA E1525/E1745 TRÅDFRI Motion Sensor
+  description: |
+    Automation for executing on and off actions for Advanced Controller for IKEA E1525/E1745 TRÅDFRI Motion Sensor.
+    The blueprint uses entities and is compatible with Zigbee2MQTT.
+    
+    **Inputs marked with * are mandatory.**
+    
+    Automations created with this blueprint can be connected with one or more of [my] (https://github.com/zsolthy/home_assistant_blueprints/) or [Awesome HA Blueprints'] (https://epmatt.github.io/awesome-ha-blueprints/docs/blueprints/hooks) hooks.
+    Hooks allow to easily create controller-based automations for interacting with media players, lights, covers and more.
+    
+    This blueprint uses regions and therefore is only compatible with HA version 2024.6 and newer.
+    
+    The script is based on the [Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints) project.
+    
+    Version 2024.09.26
+  source_url: https://github.com/zsolthy/home_assistant_blueprints/blob/main/controller_ikea_e1525_e1745_advanced.yaml
+  domain: automation
+  homeassistant:
+    min_version: 2024.6.0
+  input:
+    base:
+      name: Controller
+      input:
+        controller_entity:
+          name: Controller entity*
+          description: The occupancy sensor of the controller to use for the automation
+          default: ''
+          selector:
+            entity:
+              domain: binary_sensor
+    # state_on actions
+    state_on:
+      name: "Detected" (on) state unique actions
+      collapsed: true
+      input:
+        action_state_on_trigger:
+          name: Enbale controller event for "detected" (on) state
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: true
+          selector:
+            boolean:
+        action_state_on:
+          name: "Detected" state action(s)
+          description: Action(s) to run on "detected" (on) state.
+          default: []
+          selector:
+            action:
+    # state_off actions
+    state_off:
+      name: "Clear" (off) state unique actions
+      collapsed: true
+      input:
+        action_state_off_trigger:
+          name: Enbale controller event for "clear" (off) state
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: true
+          selector:
+            boolean:
+        action_state_off:
+          name: "Clear" (off) state action(s)
+          description: Action(s) to run on "clear" (off) state.
+          default: []
+          selector:
+            action:
+# Automation schema
+variables:
+  # build data to send within a controller event
+  controller_entity: !input controller_entity
+  controller_id: '{{controller_entity}}'
+  controller_model: IKEA E1525/E1745 TRÅDFRI Motion Sensor
+  # state variables
+  action_state_on_trigger: !input action_state_on_trigger
+  action_state_off_trigger: !input action_state_off_trigger
+  # pre-choose actions for states
+  # no need to perform this task at automation runtime
+  state_on: 'on'
+  state_off: 'off'
+mode: simple
+max_exceeded: silent
+trigger:
+  - platform: event
+    event_type: state_changed
+    event_data:
+      entity_id: !input controller_entity
+condition:
+  - condition: and
+    conditions:
+      # check that the state change event is not empty
+      - >-
+        {%- set trigger_action = trigger.event.data.new_state.state -%}
+        {{ trigger_action not in ["", "None"] }}
+      # check if the event is relative to a real state change, and not only some minor changes in the sensor attributes
+      - '{{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}'
+action:
+  - variables:
+      trigger_action: '{{ trigger.event.data.new_state.state }}'
+  # choose the sequence to run based on the received state change event
+  - choose:
+      - conditions: '{{ trigger_action | string == state_on }}'
+        sequence:
+          # if trigger is enabled fire the event
+          - if:
+              - condition: template
+                value_template: '{{ action_state_on_trigger }}'
+            then:
+              - event: ahb_controller_event
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: state_on
+                  model: '{{ controller_model }}'
+          # run the custom action
+          - choose:
+              - conditions: []
+                sequence: !input action_state_on
+      - conditions: '{{ trigger_action | string == state_off }}'
+        sequence:
+          # if trigger is enabled fire the event
+          - if:
+              - condition: template
+                value_template: '{{ action_state_off_trigger }}'
+            then:
+              - event: ahb_controller_event
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: state_off
+                  model: '{{ controller_model }}'
+          # run the custom action
+          - choose:
+              - conditions: []
+                sequence: !input action_state_off
