@@ -8,7 +8,7 @@ blueprint:
     
     **Inputs marked with * are mandatory.**
     
-    I recommend using the same types of lights in one automation to avoid unexpected transition .
+    I recommend using the same types of lights in one automation to avoid unexpected transition differences between the controlled loghts.
     I you want to control different types of light with the same controller, create separate hooks for every variant.
     
     Automations created with this blueprint must be connected with one or more of [my] (https://github.com/zsolthy/home_assistant_blueprints/) or [Awesome HA Blueprints'] (https://epmatt.github.io/awesome-ha-blueprints/docs/blueprints/controllers) controllers.
@@ -18,7 +18,7 @@ blueprint:
     
     The script is based on the [Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints) project.
     
-    Version 2024.09.27.1
+    Version 2024.09.28
   source_url: https://github.com/zsolthy/home_assistant_blueprints/blob/main/hook_lights_advanced.yaml
   domain: automation
   homeassistant:
@@ -37,7 +37,9 @@ blueprint:
           selector:
             entity:
               multiple: true
-              domain: sensor
+              domain:
+                - binary_sensor
+                - sensor
         controller_model:
           name: Controller model
           description: The model for the controller used in this automation. If you use my controllers, you can leave it on Auto. Otherwise choose a value from the list of supported controllers.
