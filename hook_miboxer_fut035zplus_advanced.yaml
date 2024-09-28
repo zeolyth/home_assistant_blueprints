@@ -1,8 +1,8 @@
 # Blueprint metadata
 blueprint:
-  name: Advanced Hook for IKEA White Sprectrum Lights
+  name: Advanced Hook for MiBoxer FUT035Z+ Dual White LED Controller
   description: |
-    Hook automation which allows to control one or more white spectrum lights through a controller. Supports brightness and color control for white temperature lights, with optional delayed turn off functionality.
+    Hook automation which allows to control one or more MiBoxer FUT035Z+ dual white LED controllers through a controller. Supports brightness and color control, with optional delayed turn off functionality.
     Features may vary depending on the selected Controllers.
     The blueprint uses entities therefore compatible with Zigbee2MQTT.
     
@@ -18,8 +18,8 @@ blueprint:
     
     The script is based on the [Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints) project.
     
-    Version 2024.09.28.3
-  source_url: https://github.com/zsolthy/home_assistant_blueprints/blob/main/hook_ikea_white_spectrum_lights_advanced.yaml
+    Version 2024.09.28.2
+  source_url: https://github.com/zsolthy/home_assistant_blueprints/blob/main/hook_miboxer_fut035zplus_advanced.yaml
   domain: automation
   homeassistant:
     min_version: 2024.6.0
@@ -187,21 +187,21 @@ blueprint:
         min_color_temp:
           name: Light minimum color temperature
           description: The minimum color temperature the light can be set with this automation.
-          default: 250
+          default: 153
           selector:
             number:
-              min: 250
-              max: 454
+              min: 153
+              max: 500
               unit_of_measurement: mireds
               mode: slider
         max_color_temp:
           name: Light maximum color temperature
           description: The maximum color temperature the light can be set with this automation.
-          default: 454
+          default: 500
           selector:
             number:
-              min: 250
-              max: 454
+              min: 153
+              max: 500
               unit_of_measurement: mireds
               mode: slider
         color_temp_steps_short:
@@ -211,7 +211,7 @@ blueprint:
           selector:
             number:
               min: 1
-              max: 204
+              max: 347
               unit_of_measurement: steps
               mode: box
         color_temp_steps_long:
@@ -221,7 +221,7 @@ blueprint:
           selector:
             number:
               min: 1
-              max: 204
+              max: 347
               unit_of_measurement: steps
               mode: box
         force_color_temp:
@@ -233,11 +233,11 @@ blueprint:
         on_color_temp:
           name: On color temperature
           description: color temperature value to force when turning on the light
-          default: 294
+          default: 284
           selector:
             number:
-              min: 250
-              max: 454
+              min: 153
+              max: 500
               unit_of_measurement: mireds
               mode: slider
 # Automation schema
