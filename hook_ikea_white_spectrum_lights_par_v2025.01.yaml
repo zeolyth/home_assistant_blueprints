@@ -2,6 +2,7 @@
 # TODOs:
 # - move steps_bs, steps_bl, steps_cs and steps_cl to the top level variables
 # - if delayed turn off is enabled, double press turns on permanently (settable, helper)
+# - move from color_temp to color_temp_kelvin (min: 2202, max: 4000, def: 3401)
 blueprint:
   name: Advanced Hook for IKEA White Spectrum Lights - Primary as Reference - v2025.01
   description: |
