@@ -1,0 +1,1101 @@
+# Blueprint metadata
+blueprint:
+  name: Advanced Controller for IKEA E1524/E1810 TRÅDFRI Wireless 5-Button Remote - v2025.01
+  description: |-
+    Automation for executing any kind of action triggered by the IKEA E1524/E1810 TRÅDFRI Wireless 5-Button Remote, with long press loop and virtual double click support.
+    This blueprint uses devices and the mqtt domain for the trigger recognition.
+    
+    **Inputs marked with * are mandatory.**
+    
+    Automations created with this blueprint can be connected with one or more of my [zeolyth](https://github.com/zeolyth/home_assistant_blueprints/) or [Awesome HA Blueprints'](https://epmatt.github.io/awesome-ha-blueprints/docs/blueprints/hooks) hooks.
+    Hooks allow to easily create controller-based automations for interacting with media players, lights, covers and more.
+    
+    This blueprint uses regions and therefore is only compatible with HA version 2024.6 and newer.
+    
+    The script is based on the [Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints) project.
+    
+    Version: 2025.01-2025.02.13
+  source_url: https://github.com/zeolyth/home_assistant_blueprints/blob/main/controller_ikea_e1524_e1810_v2025.01.yaml
+  domain: automation
+  homeassistant:
+    min_version: 2024.6.0
+  input:
+    base:
+      name: Controller
+      input:
+        controller_device:
+          name: Controller device*
+          description: The controller to use for the automation
+          selector:
+            device:
+              filter:
+                - integration: mqtt
+                  manufacturer: IKEA
+                  model: TRADFRI remote control (E1524/E1810)
+        helper_last_controller_event:
+          name: Helper for last controller event*
+          description: |-
+            Input Text to store the last event fired by the controller.
+            You will need to manually create a text input entity for this. This step is mandatory for the correct operation of the automation!
+          selector:
+            entity:
+              domain: input_text
+        event_id:
+          name: Event identifier
+          description: |-
+            An event identifier to separate the fired event from the defult events (ahb_controller_event).
+            Give it a unique name if you want to use the delayed turn off function by the lights or if you experience problems by concurrent controller actions. You have to use the same unique name by the related hooks.
+            
+            Valid characters: lowercase letters, numbers, and underscores (not validatated, usage of invalid characters can end up in crashing the automatization).
+            
+            Use it in both the controller and the hook automation that you want to seaparate. Controllers and hooks with the same event ID will cooperate with each other.
+            
+            Only compatible with zeolyth controllers and hooks!
+          default: ahb_controller_event
+    # toggle button actions
+    button_toggle:
+      name: Toggle (center) button unique actions and advanced settings
+      collapsed: true
+      input:
+        button_toggle_short_trigger:
+          name: Enbale controller event for short press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: true
+          selector:
+            boolean:
+        button_toggle_short_action:
+          name: Custom short press action(s)
+          description: Custom action(s) to run on short press.
+          default: []
+          selector:
+            action:
+        button_toggle_long_trigger:
+          name: Enbale controller event for long press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: false
+          selector:
+            boolean:
+        button_toggle_long_action:
+          name: Custom long press action(s)
+          description: Custom action(s) to run on long press.
+          default: []
+          selector:
+            action:
+        button_toggle_double_press:
+          name: Expose virtual double press event
+          description: |-
+            Choose whether or not to expose the virtual double press event for the button.
+            Turn this on if you are providing an action for the event.
+          default: false
+          selector:
+            boolean:
+        button_toggle_double_trigger:
+          name: Enbale controller event for virtual double press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: false
+          selector:
+            boolean:
+        button_toggle_double_action:
+          name: Custom virtual double press action(s)
+          description: Custom action(s) to run on virtual double press.
+          default: []
+          selector:
+            action:
+    # up button actions
+    button_up:
+      name: Up button unique actions and advanced settings
+      collapsed: true
+      input:
+        button_up_short_trigger:
+          name: Enbale controller event for short press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: true
+          selector:
+            boolean:
+        button_up_short_action:
+          name: Custom short press action(s)
+          description: Custom action(s) to run on short press.
+          default: []
+          selector:
+            action:
+        button_up_long_trigger:
+          name: Enbale controller event for long press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: true
+          selector:
+            boolean:
+        button_up_long_action:
+          name: Custom long press action(s)
+          description: Custom action(s) to run on long press.
+          default: []
+          selector:
+            action:
+        button_up_long_loop:
+          name: Long press - loop until release
+          description: Loop the custom button action until the button is released.
+          default: false
+          selector:
+            boolean:
+        button_up_release_action:
+          name: Custom long press release action(s)
+          description: Custom action(s) to run on long press release.
+          default: []
+          selector:
+            action:
+        button_up_double_press:
+          name: Expose virtual double press event
+          description: |-
+            Choose whether or not to expose the virtual double press event for the button.
+            Turn this on if you are providing a custom action for the event.
+          default: false
+          selector:
+            boolean:
+        button_up_double_trigger:
+          name: Enbale controller event for virtual double press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: false
+          selector:
+            boolean:
+        button_up_double_action:
+          name: Custom virtual double press action(s)
+          description: Custom action(s) to run on virtual double press.
+          default: []
+          selector:
+            action:
+    # down button actions
+    button_down:
+      name: Down button unique actions and advanced settings
+      collapsed: true
+      input:
+        button_down_short_trigger:
+          name: Enbale controller event for short press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: true
+          selector:
+            boolean:
+        button_down_short_action:
+          name: Custom short press action(s)
+          description: Custom action(s) to run on short press.
+          default: []
+          selector:
+            action:
+        button_down_long_trigger:
+          name: Enbale controller event for long press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: true
+          selector:
+            boolean:
+        button_down_long_action:
+          name: Custom long press action(s)
+          description: Custom action(s) to run on long press.
+          default: []
+          selector:
+            action:
+        button_down_long_loop:
+          name: Long press - loop until release
+          description: Loop the custom button action until the button is released.
+          default: false
+          selector:
+            boolean:
+        button_down_release_action:
+          name: Custom long press release action(s)
+          description: Custom action(s) to run on long press release.
+          default: []
+          selector:
+            action:
+        button_down_double_press:
+          name: Expose virtual double press event
+          description: |-
+            Choose whether or not to expose the virtual double press event for the button.
+            Turn this on if you are providing a custom action for the event.
+          default: false
+          selector:
+            boolean:
+        button_down_double_trigger:
+          name: Enbale controller event for virtual double press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: false
+          selector:
+            boolean:
+        button_down_double_action:
+          name: Custom virtual double press action(s)
+          description: Custom action(s) to run on virtual double press.
+          default: []
+          selector:
+            action:
+    # left button actions
+    button_left:
+      name: Left button unique actions and advanced settings
+      collapsed: true
+      input:
+        button_left_short_trigger:
+          name: Enbale controller event for short press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: true
+          selector:
+            boolean:
+        button_left_short_action:
+          name: Custom short press action(s)
+          description: Custom action(s) to run on short press.
+          default: []
+          selector:
+            action:
+        button_left_long_trigger:
+          name: Enbale controller event for long press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: true
+          selector:
+            boolean:
+        button_left_long_action:
+          name: Custom long press action(s)
+          description: Custom action(s) to run on long press.
+          default: []
+          selector:
+            action:
+        button_left_long_loop:
+          name: Long press - loop until release
+          description: Loop the custom button action until the button is released.
+          default: false
+          selector:
+            boolean:
+        button_left_release_action:
+          name: Custom long press release action(s)
+          description: Custom action(s) to run on long press release.
+          default: []
+          selector:
+            action:
+        button_left_double_press:
+          name: Expose virtual double press event
+          description: |-
+            Choose whether or not to expose the virtual double press event for the button.
+            Turn this on if you are providing an action for the event.
+          default: false
+          selector:
+            boolean:
+        button_left_double_trigger:
+          name: Enbale controller event for virtual double press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: false
+          selector:
+            boolean:
+        button_left_double_action:
+          name: Custom virtual double press action(s)
+          description: Custom action(s) to run on virtual double press.
+          default: []
+          selector:
+            action:
+    # right button actions
+    button_right:
+      name: Right button unique actions and advanced settings
+      collapsed: true
+      input:
+        button_right_short_trigger:
+          name: Enbale controller event for short press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: true
+          selector:
+            boolean:
+        button_right_short_action:
+          name: Custom short press action(s)
+          description: Custom action(s) to run on short press.
+          default: []
+          selector:
+            action:
+        button_right_long_trigger:
+          name: Enbale controller event for long press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: true
+          selector:
+            boolean:
+        button_right_long_action:
+          name: Custom long press action(s)
+          description: Custom action(s) to run on long press.
+          default: []
+          selector:
+            action:
+        button_right_long_loop:
+          name: Long press - loop until release
+          description: Loop the custom button action until the button is released.
+          default: false
+          selector:
+            boolean:
+        button_right_release_action:
+          name: Custom long press release action(s)
+          description: Custom action(s) to run on long press release.
+          default: []
+          selector:
+            action:
+        button_right_double_press:
+          name: Expose virtual double press event
+          description: |-
+            Choose whether or not to expose the virtual double press event for the button.
+            Turn this on if you are providing an action for the event.
+          default: false
+          selector:
+            boolean:
+        button_right_double_trigger:
+          name: Enbale controller event for virtual double press
+          description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
+          default: false
+          selector:
+            boolean:
+        button_right_double_action:
+          name: Custom virtual double press action(s)
+          description: Custom action(s) to run on virtual double press.
+          default: []
+          selector:
+            action:
+    # timing settings
+    timing_settings:
+      name: Timing settings
+      collapsed: true
+      input:
+        helper_long_press_loop_delay:
+          name: Long press loop delay
+          description: |-
+            Delay between the custom long press actions, when loop until release function is enabled.
+            Applies to all of the custom long press actions.
+          default: 100
+          selector:
+            number:
+              min: 100
+              max: 5000
+              unit_of_measurement: milliseconds
+              mode: box
+              step: 10
+        helper_long_press_max_loop_repeats:
+          name: Long press maximum loop repeats
+          description: |-
+            Maximum number of repeats for the custom long press action, when loop until release function is enabled.
+            Use it as a safety limit to prevent an endless loop in case the corresponding stop event is not received.
+          default: 500
+          selector:
+            number:
+              min: 1
+              max: 5000
+              mode: box
+        helper_double_press_delay:
+          name: Double press delay
+          description: |-
+            Max delay between the first and the second button press for the virtual double click event.
+            Increase this value if you notice that the virtual double press action is not triggered properly.
+          default: 500
+          selector:
+            number:
+              min: 100
+              max: 5000
+              unit_of_measurement: milliseconds
+              mode: box
+              step: 10
+        helper_debounce_delay:
+          name: Debounce delay
+          description: |-
+            Delay used for debouncing raw controller events. A value of 0 disables the debouncing feature.
+            Increase this value if you notice custom actions or linked hooks running multiple times when interacting with the device.
+            When the controller needs to be debounced, usually a value of 100 is enough to remove all duplicate events.
+          default: 50
+          selector:
+            number:
+              min: 0
+              max: 1000
+              unit_of_measurement: milliseconds
+              mode: box
+              step: 10
+# Automation schema
+variables:
+  # build data to send within a controller event
+  controller_device: !input controller_device
+  controller_id: '{{controller_device}}'
+  controller_model: IKEA E1524/E1810 TRÅDFRI Wireless 5-Button Remote
+  helper_last_controller_event: !input helper_last_controller_event
+  # button action variables
+  button_toggle_short_trigger: !input button_toggle_short_trigger
+  button_toggle_long_trigger: !input button_toggle_long_trigger
+  button_toggle_double_trigger: !input button_toggle_double_trigger
+  button_toggle_double_press: !input button_toggle_double_press
+  button_up_short_trigger: !input button_up_short_trigger
+  button_up_long_trigger: !input button_up_long_trigger
+  button_up_long_loop: !input button_up_long_loop
+  button_up_double_trigger: !input button_up_double_trigger
+  button_up_double_press: !input button_up_double_press
+  button_down_short_trigger: !input button_down_short_trigger
+  button_down_long_trigger: !input button_down_long_trigger
+  button_down_long_loop: !input button_down_long_loop
+  button_down_double_trigger: !input button_down_double_trigger
+  button_down_double_press: !input button_down_double_press
+  button_left_short_trigger: !input button_left_short_trigger
+  button_left_long_trigger: !input button_left_long_trigger
+  button_left_long_loop: !input button_left_long_loop
+  button_left_double_trigger: !input button_left_double_trigger
+  button_left_double_press: !input button_left_double_press
+  button_right_short_trigger: !input button_right_short_trigger
+  button_right_long_trigger: !input button_right_long_trigger
+  button_right_long_loop: !input button_right_long_loop
+  button_right_double_trigger: !input button_right_double_trigger
+  button_right_double_press: !input button_right_double_press
+  # timing variables
+  helper_debounce_delay: !input helper_debounce_delay
+  helper_long_press_loop_delay: !input helper_long_press_loop_delay
+  helper_long_press_max_loop_repeats: !input helper_long_press_max_loop_repeats
+  helper_double_press_delay: !input helper_double_press_delay
+  # adjusted debounce delay so that the resulting virtual double press delay is exactly as specified by the user when running the action, taking also account of debouncing
+  # make sure it never goes below the minimum virtual double press delay
+  adjusted_double_press_delay: '{{ [helper_double_press_delay - helper_debounce_delay, 100] | max }}'
+  # pre-choose actions for buttons
+  # no need to perform this task at automation runtime
+  button_center_short: 'toggle'
+  button_center_long: 'toggle_hold'
+  button_up_short: 'brightness_up_click'
+  button_up_long: 'brightness_up_hold'
+  button_up_release: 'brightness_up_release'
+  button_down_short: 'brightness_down_click'
+  button_down_long: 'brightness_down_hold'
+  button_down_release: 'brightness_down_release'
+  button_left_short: 'arrow_left_click'
+  button_left_long: 'arrow_left_hold'
+  button_left_release: 'arrow_left_release'
+  button_right_short: 'arrow_right_click'
+  button_right_long: 'arrow_right_hold'
+  button_right_release: 'arrow_right_release'
+mode: restart
+max_exceeded: silent
+trigger:
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: toggle
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: toggle_hold
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: brightness_up_click
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: brightness_up_hold
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: brightness_up_release
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: brightness_down_click
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: brightness_down_hold
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: brightness_down_release
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: arrow_left_click
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: arrow_left_hold
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: arrow_left_release
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: arrow_right_click
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: arrow_right_hold
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: arrow_right_release
+condition: []
+action:
+  # debouncing - when automation is triggered multiple times, the last automation run is the one which completes execution, due to mode restart
+  # therefore previous runs must wait for the debounce delay before executing any other action
+  # if the delay expires and the automation is still running it means it's the last run and execution can continue
+  - delay:
+      milliseconds: '{{ helper_debounce_delay }}'
+  # extract button event from the trigger
+  # provide a single string value to check against
+  - variables:
+      trigger_action: '{{ trigger.payload }}'
+      trigger_t: '{{ as_timestamp(now()) }}'
+      trigger_delta: '{{ (trigger_t - ((states(helper_last_controller_event) | from_json).t if helper_last_controller_event is not none and (states(helper_last_controller_event) | regex_match("^\{\"a\":\".*\",\"t\":\d+\.\d+\}$")) else as_timestamp("1970-01-01 00:00:00"))) * 1000 }}'
+      last_controller_event: '{{ (states(helper_last_controller_event) | from_json).a if helper_last_controller_event is not none and (states(helper_last_controller_event)  | regex_match("^\{\"a\":\".*\",\"t\":\d+\.\d+\}$")) else "" }}'
+  # update helper
+  - service: input_text.set_value
+    data:
+      entity_id: '{{ helper_last_controller_event }}'
+      value: '{{ {"a":trigger_action,"t":trigger_t} | to_json }}'
+  # choose the sequence to run based on the received button event
+  - choose:
+      # BUTTON CENTER SHORT
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == button_center_short }}'
+        sequence:
+          - choose:
+              # if virtual double press event is enabled
+              - conditions:
+                  - condition: template
+                    value_template: '{{ button_toggle_double_press }}'
+                sequence:
+                  - choose:
+                      # if previous event was a short press
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ trigger_action | string in states(helper_last_controller_event) and trigger_delta | int <= helper_double_press_delay | int }}'
+                        sequence:
+                          # store the virtual double press event in the last controller event helper
+                          - action: input_text.set_value
+                            data:
+                              entity_id: '{{ helper_last_controller_event }}'
+                              value: '{{ {"a":"double_press","t":trigger_t} | to_json }}'
+                         # run the virtual double press action
+                          # if trigger is enabled fire the event
+                          - if:
+                              - condition: template
+                                value_template: '{{ button_toggle_double_trigger }}'
+                            then:
+                              - event: !input event_id
+                                event_data:
+                                  controller: '{{ controller_id }}'
+                                  action: button_toggle_double
+                                  model: '{{ controller_model }}'
+                           # run the virtual double press custom action
+                          - sequence: !input button_toggle_double_action
+                    # previous event was not a short press
+                    default:
+                      # wait for the virtual double press event to occur, within the provided delay
+                      # if the second press is received, automation is restarted
+                      - delay:
+                          milliseconds: '{{ adjusted_double_press_delay }}'
+                      # if the delay expires it means no second press was received, therefore run the short press actions
+                      # if trigger is enabled fire the short press event
+                      - if:
+                          - condition: template
+                            value_template: '{{ button_toggle_short_trigger }}'
+                        then:
+                          - event: !input event_id
+                            event_data:
+                              controller: '{{ controller_id }}'
+                              action: button_center_short
+                              model: '{{ controller_model }}'
+                      # run the short press custom action
+                      - sequence: !input button_toggle_short_action
+            # if virtual double press event is disabled run the action for the single short press
+            default:
+              # if trigger is enabled fire the short press event
+              - if:
+                  - condition: template
+                    value_template: '{{ button_toggle_short_trigger }}'
+                then:
+                  - event: !input event_id
+                    event_data:
+                      controller: '{{ controller_id }}'
+                      action: button_center_short
+                      model: '{{ controller_model }}'
+              # run the short press custom action
+              - sequence: !input button_toggle_short_action
+      # BUTTON CENTER LONG
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == button_center_long }}'
+        sequence:
+          # if trigger is enabled fire the long press event
+          - if:
+              - condition: template
+                value_template: '{{ button_toggle_long_trigger }}'
+            then:
+              - event: !input event_id
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: button_center_long
+                  model: '{{ controller_model }}'
+          - sequence: !input button_toggle_long_action
+      # BUTTON UP SHORT
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == button_up_short }}'
+        sequence:
+          - choose:
+              # if virtual double press event is enabled
+              - conditions:
+                  - condition: template
+                    value_template: '{{ button_up_double_press }}'
+                sequence:
+                  - choose:
+                      # if previous event was a short press
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ trigger_action | string in states(helper_last_controller_event) and trigger_delta | int <= helper_double_press_delay | int }}'
+                        sequence:
+                          # store the virtual double press event in the last controller event helper
+                          - action: input_text.set_value
+                            data:
+                              entity_id: '{{ helper_last_controller_event }}'
+                              value: '{{ {"a":"double_press","t":trigger_t} | to_json }}'
+                         # run the virtual double press action
+                          # if trigger is enabled fire the event
+                          - if:
+                              - condition: template
+                                value_template: '{{ button_up_double_trigger }}'
+                            then:
+                              - event: !input event_id
+                                event_data:
+                                  controller: '{{ controller_id }}'
+                                  action: button_up_double
+                                  model: '{{ controller_model }}'
+                           # run the virtual double press custom action
+                          - sequence: !input button_up_double_action
+                    # previous event was not a short press
+                    default:
+                      # wait for the virtual double press event to occur, within the provided delay
+                      # if the second press is received, automation is restarted
+                      - delay:
+                          milliseconds: '{{ adjusted_double_press_delay }}'
+                      # if the delay expires it means no second press was received, therefore run the short press actions
+                      # if trigger is enabled fire the short press event
+                      - if:
+                          - condition: template
+                            value_template: '{{ button_up_short_trigger }}'
+                        then:
+                          - event: !input event_id
+                            event_data:
+                              controller: '{{ controller_id }}'
+                              action: button_up_short
+                              model: '{{ controller_model }}'
+                      # run the short press custom action
+                      - sequence: !input button_up_short_action
+            # if virtual double press event is disabled run the action for the single short press
+            default:
+              # if trigger is enabled fire the short press event
+              - if:
+                  - condition: template
+                    value_template: '{{ button_up_short_trigger }}'
+                then:
+                  - event: !input event_id
+                    event_data:
+                      controller: '{{ controller_id }}'
+                      action: button_up_short
+                      model: '{{ controller_model }}'
+              # run the short press custom action
+              - sequence: !input button_up_short_action
+      # BUTTON UP LONG
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == button_up_long }}'
+        sequence:
+          # if trigger is enabled fire the long press event
+          - if:
+              - condition: template
+                value_template: '{{ button_up_long_trigger }}'
+            then:
+              - event: !input event_id
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: button_up_long
+                  model: '{{ controller_model }}'
+          - choose:
+              # if looping is enabled, loop the long press custom action for a finite number of iterations
+              - conditions:
+                  - condition: template
+                    value_template: '{{ button_up_long_loop }}'
+                sequence:
+                  - sequence: !input button_up_long_action
+                  - repeat:
+                      while:
+                        - condition: template
+                          value_template: '{{ repeat.index < helper_long_press_max_loop_repeats | int }}'
+                      sequence:
+                        - delay:
+                            milliseconds: '{{ helper_long_press_loop_delay }}'
+                        - sequence: !input button_up_long_action
+            # if looping is not enabled run the long press custom action only once
+            default: !input button_up_long_action
+      # BUTTON UP RELEASE
+      - conditions:
+          - condition: template
+          # need to check the previous button event, stored in the provided input_text
+            value_template: '{{ trigger_action | string == button_up_release and last_controller_event | string == button_up_long }}'
+        sequence:
+          # fire the release event
+          - event: !input event_id
+            event_data:
+              controller: '{{ controller_id }}'
+              action: button_up_release
+              model: '{{ controller_model }}'
+          # run the release custom action
+          - sequence: !input button_up_release_action
+      # BUTTON DOWN SHORT
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == button_down_short }}'
+        sequence:
+          - choose:
+              # if virtual double press event is enabled
+              - conditions:
+                  - condition: template
+                    value_template: '{{ button_down_double_press }}'
+                sequence:
+                  - choose:
+                      # if previous event was a short press
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ trigger_action | string in states(helper_last_controller_event) and trigger_delta | int <= helper_double_press_delay | int }}'
+                        sequence:
+                          # store the virtual double press event in the last controller event helper
+                          - action: input_text.set_value
+                            data:
+                              entity_id: '{{ helper_last_controller_event }}'
+                              value: '{{ {"a":"double_press","t":trigger_t} | to_json }}'
+                         # run the virtual double press action
+                          # if trigger is enabled fire the event
+                          - if:
+                              - condition: template
+                                value_template: '{{ button_down_double_trigger }}'
+                            then:
+                              - event: !input event_id
+                                event_data:
+                                  controller: '{{ controller_id }}'
+                                  action: button_down_double
+                                  model: '{{ controller_model }}'
+                           # run the virtual double press custom action
+                          - sequence: !input button_down_double_action
+                    # previous event was not a short press
+                    default:
+                      # wait for the virtual double press event to occur, within the provided delay
+                      # if the second press is received, automation is restarted
+                      - delay:
+                          milliseconds: '{{ adjusted_double_press_delay }}'
+                      # if the delay expires it means no second press was received, therefore run the short press actions
+                      # if trigger is enabled fire the short press event
+                      - if:
+                          - condition: template
+                            value_template: '{{ button_down_short_trigger }}'
+                        then:
+                          - event: !input event_id
+                            event_data:
+                              controller: '{{ controller_id }}'
+                              action: button_down_short
+                              model: '{{ controller_model }}'
+                      # run the short press custom action
+                      - sequence: !input button_down_short_action
+            # if virtual double press event is disabled run the action for the single short press
+            default:
+              # if trigger is enabled fire the short press event
+              - if:
+                  - condition: template
+                    value_template: '{{ button_down_short_trigger }}'
+                then:
+                  - event: !input event_id
+                    event_data:
+                      controller: '{{ controller_id }}'
+                      action: button_down_short
+                      model: '{{ controller_model }}'
+              # run the short press custom action
+              - sequence: !input button_down_short_action
+      # BUTTON DOWN LONG
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == button_down_long }}'
+        sequence:
+          # if trigger is enabled fire the long press event
+          - if:
+              - condition: template
+                value_template: '{{ button_down_long_trigger }}'
+            then:
+              - event: !input event_id
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: button_down_long
+                  model: '{{ controller_model }}'
+          - choose:
+              # if looping is enabled, loop the long press custom action for a finite number of iterations
+              - conditions:
+                  - condition: template
+                    value_template: '{{ button_down_long_loop }}'
+                sequence:
+                  - sequence: !input button_down_long_action
+                  - repeat:
+                      while:
+                        - condition: template
+                          value_template: '{{ repeat.index < helper_long_press_max_loop_repeats | int }}'
+                      sequence:
+                        - delay:
+                            milliseconds: '{{ helper_long_press_loop_delay }}'
+                        - sequence: !input button_down_long_action
+            # if looping is not enabled run the long press custom action only once
+            default: !input button_down_long_action
+      # BUTTON DOWN RELEASE
+      - conditions:
+          - condition: template
+          # need to check the previous button event, stored in the provided input_text
+            value_template: '{{ trigger_action | string == button_down_release and last_controller_event | string == button_down_long }}'
+        sequence:
+          # fire the release event
+          - event: !input event_id
+            event_data:
+              controller: '{{ controller_id }}'
+              action: button_down_release
+              model: '{{ controller_model }}'
+          # run the release custom action
+          - sequence: !input button_down_release_action
+      # BUTTON LEFT SHORT
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == button_left_short }}'
+        sequence:
+          - choose:
+              # if virtual double press event is enabled
+              - conditions:
+                  - condition: template
+                    value_template: '{{ button_left_double_press }}'
+                sequence:
+                  - choose:
+                      # if previous event was a short press
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ trigger_action | string in states(helper_last_controller_event) and trigger_delta | int <= helper_double_press_delay | int }}'
+                        sequence:
+                          # store the virtual double press event in the last controller event helper
+                          - action: input_text.set_value
+                            data:
+                              entity_id: '{{ helper_last_controller_event }}'
+                              value: '{{ {"a":"double_press","t":trigger_t} | to_json }}'
+                         # run the virtual double press action
+                          # if trigger is enabled fire the event
+                          - if:
+                              - condition: template
+                                value_template: '{{ button_left_double_trigger }}'
+                            then:
+                              - event: !input event_id
+                                event_data:
+                                  controller: '{{ controller_id }}'
+                                  action: button_left_double
+                                  model: '{{ controller_model }}'
+                           # run the virtual double press custom action
+                          - sequence: !input button_left_double_action
+                    # previous event was not a short press
+                    default:
+                      # wait for the virtual double press event to occur, within the provided delay
+                      # if the second press is received, automation is restarted
+                      - delay:
+                          milliseconds: '{{ adjusted_double_press_delay }}'
+                      # if the delay expires it means no second press was received, therefore run the short press actions
+                      # if trigger is enabled fire the short press event
+                      - if:
+                          - condition: template
+                            value_template: '{{ button_left_short_trigger }}'
+                        then:
+                          - event: !input event_id
+                            event_data:
+                              controller: '{{ controller_id }}'
+                              action: button_left_short
+                              model: '{{ controller_model }}'
+                      # run the short press custom action
+                      - sequence: !input button_left_short_action
+            # if virtual double press event is disabled run the action for the single short press
+            default:
+              # if trigger is enabled fire the short press event
+              - if:
+                  - condition: template
+                    value_template: '{{ button_left_short_trigger }}'
+                then:
+                  - event: !input event_id
+                    event_data:
+                      controller: '{{ controller_id }}'
+                      action: button_left_short
+                      model: '{{ controller_model }}'
+              # run the short press custom action
+              - sequence: !input button_left_short_action
+      # BUTTON LEFT LONG
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == button_left_long }}'
+        sequence:
+          # if trigger is enabled fire the long press event
+          - if:
+              - condition: template
+                value_template: '{{ button_left_long_trigger }}'
+            then:
+              - event: !input event_id
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: button_left_long
+                  model: '{{ controller_model }}'
+          - choose:
+              # if looping is enabled, loop the long press custom action for a finite number of iterations
+              - conditions:
+                  - condition: template
+                    value_template: '{{ button_left_long_loop }}'
+                sequence:
+                  - sequence: !input button_left_long_action
+                  - repeat:
+                      while:
+                        - condition: template
+                          value_template: '{{ repeat.index < helper_long_press_max_loop_repeats | int }}'
+                      sequence:
+                        - delay:
+                            milliseconds: '{{ helper_long_press_loop_delay }}'
+                        - sequence: !input button_left_long_action
+            # if looping is not enabled run the long press custom action only once
+            default: !input button_left_long_action
+      # BUTTON LEFT RELEASE
+      - conditions:
+          - condition: template
+          # need to check the previous button event, stored in the provided input_text
+            value_template: '{{ trigger_action | string == button_left_release and last_controller_event | string == button_left_long }}'
+        sequence:
+          # if trigger is enabled fire the release event
+          - if:
+              - condition: template
+                value_template: '{{ button_left_release_trigger }}'
+            then:
+              - event: !input event_id
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: button_left_release
+                  model: '{{ controller_model }}'
+          # run the release custom action
+          - sequence: !input button_left_release_action
+      # BUTTON RIGHT SHORT
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == button_right_short }}'
+        sequence:
+          - choose:
+              # if virtual double press event is enabled
+              - conditions:
+                  - condition: template
+                    value_template: '{{ button_right_double_press }}'
+                sequence:
+                  - choose:
+                      # if previous event was a short press
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ trigger_action | string in states(helper_last_controller_event) and trigger_delta | int <= helper_double_press_delay | int }}'
+                        sequence:
+                          # store the virtual double press event in the last controller event helper
+                          - action: input_text.set_value
+                            data:
+                              entity_id: '{{ helper_last_controller_event }}'
+                              value: '{{ {"a":"double_press","t":trigger_t} | to_json }}'
+                         # run the virtual double press action
+                          # if trigger is enabled fire the event
+                          - if:
+                              - condition: template
+                                value_template: '{{ button_right_double_trigger }}'
+                            then:
+                              - event: !input event_id
+                                event_data:
+                                  controller: '{{ controller_id }}'
+                                  action: button_right_double
+                                  model: '{{ controller_model }}'
+                           # run the virtual double press custom action
+                          - sequence: !input button_right_double_action
+                    # previous event was not a short press
+                    default:
+                      # wait for the virtual double press event to occur, within the provided delay
+                      # if the second press is received, automation is restarted
+                      - delay:
+                          milliseconds: '{{ adjusted_double_press_delay }}'
+                      # if the delay expires it means no second press was received, therefore run the short press actions
+                      # if trigger is enabled fire the short press event
+                      - if:
+                          - condition: template
+                            value_template: '{{ button_right_short_trigger }}'
+                        then:
+                          - event: !input event_id
+                            event_data:
+                              controller: '{{ controller_id }}'
+                              action: button_right_short
+                              model: '{{ controller_model }}'
+                      # run the short press custom action
+                      - sequence: !input button_right_short_action
+            # if virtual double press event is disabled run the action for the single short press
+            default:
+              # if trigger is enabled fire the short press event
+              - if:
+                  - condition: template
+                    value_template: '{{ button_right_short_trigger }}'
+                then:
+                  - event: !input event_id
+                    event_data:
+                      controller: '{{ controller_id }}'
+                      action: button_right_short
+                      model: '{{ controller_model }}'
+              # run the short press custom action
+              - sequence: !input button_right_short_action
+      # BUTTON RIGHT LONG
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == button_right_long }}'
+        sequence:
+          # if trigger is enabled fire the long press event
+          - if:
+              - condition: template
+                value_template: '{{ button_right_long_trigger }}'
+            then:
+              - event: !input event_id
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: button_right_long
+                  model: '{{ controller_model }}'
+          - choose:
+              # if looping is enabled, loop the long press custom action for a finite number of iterations
+              - conditions:
+                  - condition: template
+                    value_template: '{{ button_right_long_loop }}'
+                sequence:
+                  - sequence: !input button_right_long_action
+                  - repeat:
+                      while:
+                        - condition: template
+                          value_template: '{{ repeat.index < helper_long_press_max_loop_repeats | int }}'
+                      sequence:
+                        - delay:
+                            milliseconds: '{{ helper_long_press_loop_delay }}'
+                        - sequence: !input button_right_long_action
+            # if looping is not enabled run the long press custom action only once
+            default: !input button_right_long_action
+      # BUTTON RIGHT RELEASE
+      - conditions:
+          - condition: template
+          # need to check the previous button event, stored in the provided input_text
+            value_template: '{{ trigger_action | string == button_right_release and last_controller_event | string == button_right_long }}'
+        sequence:
+          # if trigger is enabled fire the release event
+          - if:
+              - condition: template
+                value_template: '{{ button_right_release_trigger }}'
+            then:
+              - event: !input event_id
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: button_right_release
+                  model: '{{ controller_model }}'
+          # run the release custom action
+          - sequence: !input button_right_release_action

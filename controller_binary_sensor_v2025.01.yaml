@@ -1,23 +1,23 @@
 # Blueprint metadata
 blueprint:
-  name: Advanced Controller for Binary (On/Off) Sensor
+  name: Advanced Controller for Binary (On/Off) Sensor - v2025.01
   description: |
-    Automation for executing on and off actions for any binary sensor, for example motion detectors.
-    The blueprint uses entities and is compatible with Zigbee2MQTT.
+    Automation for executing on and off actions for any binary sensor, for example motion or presence detectors.
+    The blueprint uses entities and does not depend on the integration.
     
     **Inputs marked with * are mandatory.**
     
-    Trun off the *"Clear" (off) state unique actions / Enbale controller event for "clear" (off) state* toggle if you dont want to send a turn off signal to controlled device(s)
+    Trun off the *"Off" state unique actions / Enbale controller event for "off" state* toggle if you dont want to send a turn off signal to the controlled device(s)
     
-    Automations created with this blueprint can be connected with one or more of [my] (https://github.com/zsolthy/home_assistant_blueprints/) or [Awesome HA Blueprints'] (https://epmatt.github.io/awesome-ha-blueprints/docs/blueprints/hooks) hooks.
+    Automations created with this blueprint can be connected with one or more of my [zeolyth](https://github.com/zeolyth/home_assistant_blueprints/) or [Awesome HA Blueprints'](https://epmatt.github.io/awesome-ha-blueprints/docs/blueprints/hooks) hooks.
     Hooks allow to easily create controller-based automations for interacting with media players, lights, covers and more.
     
     This blueprint uses regions and therefore is only compatible with HA version 2024.6 and newer.
     
     The script is based on the [Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints) project.
     
-    Version 2024.09.28
-  source_url: https://github.com/zsolthy/home_assistant_blueprints/blob/main/controller_binary_sensor_advanced.yaml
+    Version: 2025.01-2025.02.13
+  source_url: https://github.com/zeolyth/home_assistant_blueprints/blob/main/controller_binary_sensor_v2025.01.yaml
   domain: automation
   homeassistant:
     min_version: 2024.6.0
@@ -28,22 +28,33 @@ blueprint:
         controller_entity:
           name: Controller entity*
           description: The binary sensor to use for the automation
-          default: ''
           selector:
             entity:
               domain: binary_sensor
+        event_id:
+          name: Event identifier
+          description: |-
+            An event identifier to separate the fired event from the defult events (ahb_controller_event).
+            Give it a unique name if you want to use the delayed turn off function by the lights or if you experience problems by concurrent controller actions. You have to use the same unique name by the related hooks.
+            
+            Valid characters: lowercase letters, numbers, and underscores (not validatated, usage of invalid characters can end up in crashing the automatization).
+            
+            Use it in both the controller and the hook automation that you want to seaparate. Controllers and hooks with the same event ID will cooperate with each other.
+            
+            Only compatible with zeolyth controllers and hooks!
+          default: ahb_controller_event
     # state_on actions
     state_on:
       name: On state unique actions
       collapsed: true
       input:
-        action_state_on_trigger:
+        state_on_trigger:
           name: Enbale controller event for on state
           description: If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
           default: true
           selector:
             boolean:
-        action_state_on:
+        state_on_action:
           name: On state action(s)
           description: Action(s) to run on on state.
           default: []
@@ -54,7 +65,7 @@ blueprint:
       name: Off state unique actions
       collapsed: true
       input:
-        action_state_off_trigger:
+        state_off_trigger:
           name: Enbale controller event for off state
           description: |-
             If disabled, the original controller event won't be triggered, that means the hooked automatization will not execute.
@@ -63,7 +74,7 @@ blueprint:
           default: true
           selector:
             boolean:
-        action_state_off:
+        state_off_action:
           name: Off state action(s)
           description: Action(s) to run on off state.
           default: []
@@ -76,16 +87,16 @@ variables:
   controller_id: '{{controller_entity}}'
   controller_model: Binary Sensor
   # state variables
-  action_state_on_trigger: !input action_state_on_trigger
-  action_state_off_trigger: !input action_state_off_trigger
+  state_on_trigger: !input state_on_trigger
+  state_off_trigger: !input state_off_trigger
   # pre-choose actions for states
   # no need to perform this task at automation runtime
   state_on: 'on'
   state_off: 'off'
-mode: single
+mode: restart
 max_exceeded: silent
 trigger:
-  - platform: event
+  - trigger: event
     event_type: state_changed
     event_data:
       entity_id: !input controller_entity
@@ -93,11 +104,13 @@ condition:
   - condition: and
     conditions:
       # check that the state change event is not empty
-      - >-
-        {%- set trigger_action = trigger.event.data.new_state.state -%}
-        {{ trigger_action not in ["", "None"] }}
+      - condition: template
+        value_template: >-
+          {%- set trigger_action = trigger.event.data.new_state.state -%}
+          {{ trigger_action not in ["", "None"] }}
       # check if the event is relative to a real state change, and not only some minor changes in the sensor attributes
-      - '{{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}'
+      - condition: template
+        value_template: '{{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}'
 action:
   - variables:
       trigger_action: '{{ trigger.event.data.new_state.state }}'
@@ -108,9 +121,9 @@ action:
           # if trigger is enabled fire the event
           - if:
               - condition: template
-                value_template: '{{ action_state_on_trigger }}'
+                value_template: '{{ state_on_trigger }}'
             then:
-              - event: ahb_controller_event
+              - event: !input event_id
                 event_data:
                   controller: '{{ controller_id }}'
                   action: state_on
@@ -118,15 +131,15 @@ action:
           # run the custom action
           - choose:
               - conditions: []
-                sequence: !input action_state_on
+                sequence: !input state_on_action
       - conditions: '{{ trigger_action | string == state_off }}'
         sequence:
           # if trigger is enabled fire the event
           - if:
               - condition: template
-                value_template: '{{ action_state_off_trigger }}'
+                value_template: '{{ state_off_trigger }}'
             then:
-              - event: ahb_controller_event
+              - event: !input event_id
                 event_data:
                   controller: '{{ controller_id }}'
                   action: state_off
@@ -134,4 +147,4 @@ action:
           # run the custom action
           - choose:
               - conditions: []
-                sequence: !input action_state_off
+                sequence: !input state_off_action

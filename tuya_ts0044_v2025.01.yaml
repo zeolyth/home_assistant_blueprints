@@ -1,0 +1,214 @@
+# Blueprint metadata
+blueprint:
+  name: Automation for TUYA TS0044 Wireless Switch with 4 Buttons - v2025.01
+  description: |-
+    Automation for executing any kind of action triggered by the TUYA TS0044 Wireless Switch with 4 Buttons.
+    This blueprint uses devices and the mqtt domain for the trigger recognition.
+    
+    **Inputs marked with * are mandatory.**
+    
+    This blueprint uses regions and therefore is only compatible with HA version 2024.6 and newer.
+    
+    Version: 2025.01-2025.02.13
+  source_url: https://github.com/zeolyth/home_assistant_blueprints/blob/main/tuya_ts0044_v2025.01.yaml
+  domain: automation
+  homeassistant:
+    min_version: 2024.6.0
+  input:
+    base:
+      name: Controller
+      input:
+        controller_device:
+          name: Controller device*
+          description: The controller to use for the automation
+          selector:
+            device:
+              filter:
+                - integration: mqtt
+                  manufacturer: Tuya
+                  model: Wireless switch with 4 buttons
+    # button actions
+    buttons:
+      name: Button actions
+      input:
+        button_1_single_action:
+          name: Upper left button single press action
+          default: []
+          selector:
+            action:
+        button_1_double_action:
+          name: Upper left button double press action
+          default: []
+          selector:
+            action:
+        button_1_long_action:
+          name: Upper left button long press action
+          default: []
+          selector:
+            action:
+        button_2_single_action:
+          name: Upper right button single press action
+          default: []
+          selector:
+            action:
+        button_2_double_action:
+          name: Upper right button double press action
+          default: []
+          selector:
+            action:
+        button_2_long_action:
+          name: Upper right button long press action
+          default: []
+          selector:
+            action:
+        button_3_single_action:
+          name: Lower left button single press action
+          default: []
+          selector:
+            action:
+        button_3_double_action:
+          name: Lower left button double press action
+          default: []
+          selector:
+            action:
+        button_3_long_action:
+          name: Lower left button long press action
+          default: []
+          selector:
+            action:
+        button_4_single_action:
+          name: Lower right button single press action
+          default: []
+          selector:
+            action:
+        button_4_double_action:
+          name: Lower right button double press action
+          default: []
+          selector:
+            action:
+        button_4_long_action:
+          name: Lower right button long press action
+          default: []
+          selector:
+            action:
+variables:
+  # build data to send within a controller event
+  controller_device: !input controller_device
+  controller_id: '{{controller_device}}'
+  controller_model: TUYA TS0044 Wireless switch with 4 buttons
+mode: restart
+max_exceeded: silent
+trigger:
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 1_single
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 1_double
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 1_long
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 2_single
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 2_double
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 2_long
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 3_single
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 3_double
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 3_long
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 4_single
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 4_double
+  - trigger: device
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 4_long
+condition: []
+action:
+  - variables:
+      trigger_action: '{{ trigger.payload }}'
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "1_single" }}'
+        sequence: !input button_1_single_action
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "1_double" }}'
+        sequence: !input button_1_double_action
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "1_long" }}'
+        sequence: !input button_1_long_action
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "2_single" }}'
+        sequence: !input button_2_single_action
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "2_double" }}'
+        sequence: !input button_2_double_action
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "2_long" }}'
+        sequence: !input button_2_long_action
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "3_single" }}'
+        sequence: !input button_3_single_action
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "3_double" }}'
+        sequence: !input button_3_double_action
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "3_long" }}'
+        sequence: !input button_3_long_action
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "4_single" }}'
+        sequence: !input button_4_single_action
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "4_double" }}'
+        sequence: !input button_4_double_action
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action | string == "4_long" }}'
+        sequence: !input button_4_long_action

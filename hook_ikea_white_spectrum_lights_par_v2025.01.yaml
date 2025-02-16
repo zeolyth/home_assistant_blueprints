@@ -1,0 +1,1266 @@
+# Blueprint metadata
+# TODOs:
+# - move steps_bs, steps_bl, steps_cs and steps_cl to the top level variables
+# - if delayed turn off is enabled, double press turns on permanently (settable, helper)
+blueprint:
+  name: Advanced Hook for IKEA White Spectrum Lights - Primary as Reference - v2025.01
+  description: |
+    Hook automation which allows to control one or more IKEA white spectrum lights through a controller. Supports brightness and color control with optional delayed turn off functionality.
+    
+    The primary light entity is the reference for the secondary ones, that means all the secondary light entities will copy the properties of the primary entity.
+    
+    Features may vary depending on the selected Controllers.
+    The blueprint can accept multiple devices and/or entities as controllers.
+    
+    **Inputs marked with * are mandatory.**
+    
+    I recommend using the same types of lights in one hook to avoid unexpected transition differences between the controlled lights.
+    I you want to control different types of light with the same controller, create separate hooks for every variant.
+    
+    Automations created with this blueprint must be connected with one or more of my [zeolyth](https://github.com/zeolyth/home_assistant_blueprints/) or [Awesome HA Blueprints'](https://epmatt.github.io/awesome-ha-blueprints/docs/blueprints/controllers) controllers.
+    Controllers are blueprints which allow to easily integrate a wide range of controllers (wall switches, remotes, dimmers, etc.) and use them to run a set of actions when interacting with them.
+    
+    This blueprint uses regions and therefore is only compatible with HA version 2024.6 and newer.
+    
+    The script is based on the [Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints) project.
+    
+    Version: 2025.01-2025.02.13
+  source_url: https://github.com/zeolyth/home_assistant_blueprints/blob/main/hook_ikea_white_spectrum_lights_par_v2025.01.yaml
+  domain: automation
+  homeassistant:
+    min_version: 2024.6.0
+  input:
+    base:
+      name: Controllers and Lights
+      input:
+        controller_device:
+          name: Controller Devices*
+          description: |
+            One or more controller devices which will control the Light. These values should match the one specified in the corresponding Controller automations.
+            You must select at least one device or entity (not validatated, if you leave both inputs empty, simply the hook will do nothing).
+            
+            If you use Awesome HA Blueprints, select only controllers of the same model and use the Controller model selector to specify the correct model, otherwise it can happen that some buttons will operate undesirable!
+          default: []
+          selector:
+            device:
+              multiple: true
+              entity:
+                domain: sensor
+        controller_entity:
+          name: Controller Entities*
+          description: |
+            One or more controller entities which will control the Light. These values should match the one specified in the corresponding Controller automations.
+            You must select at least one device or entity (not validatated, if you leave both inputs empty, simply the hook will do nothing).
+            
+            If you use Awesome HA Blueprints, select only controllers of the same model and use the Controller model selector to specify the correct model, otherwise it can happen that some buttons will operate undesirable!
+          default: []
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - binary_sensor
+                - sensor
+        controller_model:
+          name: Controller model
+          description: |-
+            The model for the controller used in this automation.
+            If you use my [zeolyth](https://github.com/zeolyth/home_assistant_blueprints/) controllers, you can leave it on Auto, otherwise you have to choose a value from the list of supported controllers.
+          default: Auto
+          selector:
+            select:
+              options:
+                - Auto
+                - IKEA E1524/E1810 TRÅDFRI Wireless 5-Button Remote
+                - IKEA E1743 TRÅDFRI On/Off Switch & Dimmer
+                - IKEA E1743 TRÅDFRI On/Off Switch & Dimmer (#2)
+                - IKEA E1744 SYMFONISK Rotary Remote
+                - IKEA E1766 TRÅDFRI Open/Close Remote
+                - IKEA E1766 TRÅDFRI Open/Close Remote (#2)
+                - IKEA E1812 TRÅDFRI Shortcut button
+                - IKEA E2001/E2002 STYRBAR Remote control
+                - IKEA E2001/E2002 STYRBAR Remote control (#2)
+                - IKEA ICTC-G-1 TRÅDFRI wireless dimmer
+                - OSRAM AC025XX00NJ SMART+ Switch Mini
+                - Philips 324131092621 Hue Dimmer switch
+                - Philips 8718699693985 Hue Smart Button
+                - Philips 929002398602 Hue Dimmer switch v2
+                - SONOFF SNZB-01 Wireless Switch
+                - Xiaomi WXCJKG11LM Aqara Opple 2 button remote
+                - Xiaomi WXCJKG12LM Aqara Opple 4 button remote
+                - Xiaomi WXCJKG12LM Aqara Opple 4 button remote (#2)
+                - Xiaomi WXCJKG13LM Aqara Opple 6 button remote
+                - Xiaomi WXCJKG13LM Aqara Opple 6 button remote (#2)
+                - Xiaomi WXCJKG13LM Aqara Opple 6 button remote (#3)
+                - Xiaomi WXKG11LM Aqara Wireless Switch Mini
+        input_light_ref:
+          name: Primary light*
+          description: |-
+            Primary light, which will be controlled through this automation.
+            If slave lights are also given, this item will be the reference for the starting values of the transitions.
+          selector:
+            entity:
+              filter:
+                - domain: light
+        input_lights_slave:
+          name: Slave lights
+          description: |-
+            Slave light(s) which will be controlled through this automation.
+            These lights will always copy the transitions of the primary light item.
+            
+            Do not use different models! If the reference bulb has other brightness levels, color mode or color temperature levels as the slaves, the transitions can end up in unpredictable behavior for the incompatible bulbs.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: light
+        event_id:
+          name: Event identifier
+          description: |-
+            An event identifier to separate the fired event from the defult events (ahb_controller_event).
+            Give it a unique name if you want to use the delayed turn off function by the lights or if you experience problems by concurrent controller actions. You have to use the same unique name by the related controllers.
+            
+            Valid characters: lowercase letters, numbers, and underscores (not validatated, usage of invalid characters can end up in crashing the automatization).
+            
+            Use it in both the controller and the hook automation that you want to seaparate. Controllers and hooks with the same event ID will cooperate with each other.
+            
+            Only compatible with zeolyth controllers and hooks!
+          default: ahb_controller_event
+    # delayed turn off settings
+    delayed_turn_off:
+      name: Delayed turn off
+      collapsed: true
+      input:
+        delayed_turn_off_enable:
+          name: Enable delayed turn off
+          description: |-
+            Enable delayed turn off of the lights.
+            For this function to work correctly you have to give a unique name for the event identifier both on the this light hook and the related controller automations.
+            
+            If enabled, the functions turn on on brightness or color change will be disabled.
+          default: false
+          selector:
+            boolean:
+        delayed_turn_off_interval:
+          name: Delay before turning off the lights in seconds
+          default: 100
+          selector:
+            number:
+              unit_of_measurement: seconds
+              mode: box
+    # light transition settings
+    transition_settings:
+      name: Light advanced settings - transition
+      collapsed: true
+      input:
+        light_transition_short:
+          name: Light Transition for short actions
+          description: The time (in milliseconds) the light should take for turn on or off or for a short action.
+          default: 250
+          selector:
+            number:
+              min: 0
+              max: 60000
+              unit_of_measurement: milliseconds
+              mode: box
+        light_transition_long:
+          name: Light Transition for long actions
+          description: The time (in milliseconds) the light should take for a long action.
+          default: 100
+          selector:
+            number:
+              min: 0
+              max: 60000
+              unit_of_measurement: milliseconds
+              mode: box
+    # light brightness settings
+    brightness_settings:
+      name: Light advanced settings - brightness
+      collapsed: true
+      input:
+        brightness_min:
+          name: Light minimum brightness
+          description: The minimum brightness the light can be set with this automation.
+          default: 1
+          selector:
+            number:
+              min: 1
+              max: 255
+              unit_of_measurement: brightness
+              mode: slider
+        brightness_max:
+          name: Light maximum brightness
+          description: The maximum brightness the light can be set with this automation.
+          default: 255
+          selector:
+            number:
+              min: 1
+              max: 255
+              unit_of_measurement: brightness
+              mode: slider
+        brightness_steps_short:
+          name: Light brightness steps - short actions
+          description: Number of steps from min to max brightness when controlling brightness with short actions (eg. button press).
+          default: 10
+          selector:
+            number:
+              min: 1
+              max: 254
+              unit_of_measurement: steps
+              mode: box
+        brightness_steps_long:
+          name: Light brightness steps - long actions
+          description: Number of steps from min to max brightness when controlling brightness with long actions (eg. button hold or controller rotation).
+          default: 25
+          selector:
+            number:
+              min: 1
+              max: 254
+              unit_of_measurement: steps
+              mode: box
+        brightness_force:
+          name: Force brightness value at turn on
+          description: |-
+            Force brightness to the "On brightness" input value, when the light is being turned on.
+            When disabled, the value stored in the device will be used.
+          default: false
+          selector:
+            boolean:
+        brightness_on:
+          name: On brightness
+          description: Brightness value to force when turning on the light.
+          default: 255
+          selector:
+            number:
+              min: 1
+              max: 255
+              unit_of_measurement: brightness
+              mode: slider
+        smooth_power_on:
+          name: Smooth power on
+          description: |-
+            Force the light to turn on at minimum brightness when a brightness up command (single or continuous) is triggered and light is off.
+            Disabling it will turn the light on with the last brightness.
+            
+            If the delayed turn off function is enabled, the turn on light on brightness change function will be completely disabled and this value will take no effect.
+          default: true
+          selector:
+            boolean:
+        smooth_power_off:
+          name: Smooth power off
+          description: |-
+            Allow a brightness down command (single or continuous) to turn off the light when at minimum brightness.
+            Disabling this will prevent the light from being turned off by brightness down commands.
+          default: true
+          selector:
+            boolean:
+    # color temperature settings
+    color_temp_settings:
+      name: Light advanced settings - color temperature
+      collapsed: true
+      input:
+        color_temp_min:
+          name: Light minimum color temperature
+          description: The minimum color temperature the light can be set with this automation.
+          default: 250
+          selector:
+            number:
+              min: 250
+              max: 454
+              unit_of_measurement: mireds
+              mode: slider
+        color_temp_max:
+          name: Light maximum color temperature
+          description: The maximum color temperature the light can be set with this automation.
+          default: 454
+          selector:
+            number:
+              min: 250
+              max: 454
+              unit_of_measurement: mireds
+              mode: slider
+        color_temp_steps_short:
+          name: Light color temperature steps - short actions
+          description: Number of steps from min to max color temperature when controlling color temperature with short actions (eg. button press).
+          default: 10
+          selector:
+            number:
+              min: 1
+              max: 204
+              unit_of_measurement: steps
+              mode: box
+        color_temp_steps_long:
+          name: Light color temperature steps - long actions
+          description: Number of steps from min to max color temperature when controlling color temperature with long actions (eg. button hold or controller rotation).
+          default: 20
+          selector:
+            number:
+              min: 1
+              max: 204
+              unit_of_measurement: steps
+              mode: box
+        color_temp_force:
+          name: Force color temperature value at turn on
+          description: Force color temperature to the "On color temperature" input value, when the light is being turned on.
+          default: false
+          selector:
+            boolean:
+        color_temp_on:
+          name: On color temperature
+          description: Color temperature value to force when turning on the light.
+          default: 294
+          selector:
+            number:
+              min: 250
+              max: 454
+              unit_of_measurement: mireds
+              mode: slider
+        color_temp_power_on:
+          name: Turn on by color change
+          description: |-
+            Force the light to turn on if the color change buttons were pressed.
+            
+            If the delayed turn off function is enabled, this function will be disabled and this value will take no effect.
+          default: true
+          selector:
+            boolean:
+# Automation schema
+variables:
+  # convert blueprint inputs into variables to be used in templates
+  controller_device: !input controller_device
+  controller_entity: !input controller_entity
+  input_controller_model: !input controller_model
+  input_light_ref: !input input_light_ref
+  input_lights_slave: !input input_lights_slave
+  input_light: '{{ [input_light_ref] + input_lights_slave }}'
+  # supported controllers and mappings
+  controller_mapping:
+    Binary Sensor:
+      turn_on: state_on
+      turn_off: state_off
+    IKEA E1524/E1810 TRÅDFRI Wireless 5-Button Remote:
+      brightness_up: button_up_short
+      brightness_up_repeat: button_up_long
+      brightness_down: button_down_short
+      brightness_down_repeat: button_down_long
+      color_down: button_left_short
+      color_down_repeat: button_left_long
+      color_up: button_right_short
+      color_up_repeat: button_right_long
+      toggle: button_center_short
+    IKEA E1743 TRÅDFRI On/Off Switch & Dimmer:
+      turn_on: button_up_short
+      brightness_up_repeat: button_up_long
+      color_up: button_up_double
+      turn_off: button_down_short
+      brightness_down_repeat: button_down_long
+      color_down: button_down_double
+    IKEA E1743 TRÅDFRI On/Off Switch & Dimmer (#2):
+      brightness_up: button_up_short
+      brightness_up_repeat: button_up_long
+      turn_on: button_up_double
+      brightness_down: button_down_short
+      brightness_down_repeat: button_down_long
+      turn_off: button_down_double
+    IKEA E1744 SYMFONISK Rotary Remote:
+      brightness_down_repeat: rotate_left
+      brightness_up_repeat: rotate_right
+      toggle: click_short
+      color_up: click_double
+      color_down: click_triple
+    IKEA E1766 TRÅDFRI Open/Close Remote:
+      brightness_up: button_up_short
+      turn_on: button_up_double
+      brightness_down: button_down_short
+      turn_off: button_down_double
+    IKEA E1766 TRÅDFRI Open/Close Remote (#2):
+      brightness_up: button_up_short
+      color_up: button_up_double
+      brightness_down: button_down_short
+      color_down: button_down_double
+    IKEA E1812 TRÅDFRI Shortcut button:
+      toggle: button_short
+      color_up: button_double
+    IKEA E2001/E2002 STYRBAR Remote control:
+      turn_on: button_up_short
+      brightness_up_repeat: button_up_long
+      turn_off: button_down_short
+      brightness_down_repeat: button_down_long
+      color_down: button_left_short
+      color_down_repeat: button_left_long
+      color_up: button_right_short
+      color_up_repeat: button_right_long
+    IKEA E2001/E2002 STYRBAR Remote control (#2):
+      brightness_up: button_up_short
+      brightness_up_repeat: button_up_long
+      turn_on: button_up_double
+      brightness_down: button_down_short
+      brightness_down_repeat: button_down_long
+      turn_off: button_down_double
+      color_down: button_left_short
+      color_down_repeat: button_left_long
+      color_up: button_right_short
+      color_up_repeat: button_right_long
+    IKEA ICTC-G-1 TRÅDFRI wireless dimmer:
+      brightness_down_repeat: rotate_left
+      brightness_up_repeat: rotate_right
+    OSRAM AC025XX00NJ SMART+ Switch Mini:
+      brightness_up: button_up_short
+      brightness_up_repeat: button_up_long
+      color_up: button_up_double
+      brightness_down: button_down_short
+      brightness_down_repeat: button_down_long
+      color_down: button_down_double
+      toggle: button_center_short
+    Philips 324131092621 Hue Dimmer switch:
+      turn_on: button_on_short
+      color_up_repeat: button_on_long
+      turn_off: button_off_short
+      color_down_repeat: button_off_long
+      brightness_up: button_up_short
+      brightness_up_repeat: button_up_long
+      brightness_down: button_down_short
+      brightness_down_repeat: button_down_long
+    Philips 8718699693985 Hue Smart Button:
+      toggle: button_short
+    Philips 929002398602 Hue Dimmer switch v2:
+      turn_on: button_on_short
+      color_up_repeat: button_on_long
+      turn_off: button_off_short
+      color_down_repeat: button_off_long
+      brightness_up: button_up_short
+      brightness_up_repeat: button_up_long
+      brightness_down: button_down_short
+      brightness_down_repeat: button_down_long
+    SONOFF SNZB-01 Wireless Switch:
+      toggle: button_short
+      color_up: button_double
+    Xiaomi WXCJKG11LM Aqara Opple 2 button remote:
+      turn_on: button_1_short
+      brightness_up_repeat: button_1_long
+      color_up: button_1_double
+      turn_off: button_2_short
+      brightness_down_repeat: button_2_long
+      color_down: button_2_double
+    Xiaomi WXCJKG12LM Aqara Opple 4 button remote:
+      turn_on: button_1_short
+      brightness_up_repeat: button_1_long
+      color_up: button_1_double
+      turn_off: button_2_short
+      brightness_down_repeat: button_2_long
+      color_down: button_2_double
+    Xiaomi WXCJKG12LM Aqara Opple 4 button remote (#2):
+      turn_on: button_3_short
+      brightness_up_repeat: button_3_long
+      color_up: button_3_double
+      turn_off: button_4_short
+      brightness_down_repeat: button_4_long
+      color_down: button_4_double
+    Xiaomi WXCJKG13LM Aqara Opple 6 button remote:
+      turn_on: button_1_short
+      brightness_up_repeat: button_1_long
+      color_up: button_1_double
+      turn_off: button_2_short
+      brightness_down_repeat: button_2_long
+      color_down: button_2_double
+    Xiaomi WXCJKG13LM Aqara Opple 6 button remote (#2):
+      turn_on: button_3_short
+      brightness_up_repeat: button_3_long
+      color_up: button_3_double
+      turn_off: button_4_short
+      brightness_down_repeat: button_4_long
+      color_down: button_4_double
+    Xiaomi WXCJKG13LM Aqara Opple 6 button remote (#3):
+      turn_on: button_5_short
+      brightness_up_repeat: button_5_long
+      color_up: button_5_double
+      turn_off: button_6_short
+      brightness_down_repeat: button_6_long
+      color_down: button_6_double
+    Xiaomi WXKG11LM Aqara Wireless Switch Mini:
+      toggle: button_short
+      color_up: button_double
+  delayed_turn_off_enable: !input delayed_turn_off_enable
+  delayed_turn_off_interval: !input delayed_turn_off_interval
+  light_transition_short: !input light_transition_short
+  light_transition_long: !input light_transition_long
+  brightness_min: !input brightness_min
+  brightness_max: !input brightness_max
+  brightness_steps_short: !input brightness_steps_short
+  brightness_steps_long: !input brightness_steps_long
+  brightness_steps_short_calc: '{{ (brightness_max - brightness_min) / brightness_steps_short }}'
+  brightness_steps_long_calc: '{{ (brightness_max - brightness_min) / brightness_steps_long }}'
+  brightness_force_i: !input brightness_force
+  brightness_force: '{{ brightness_force_i and "brightness" in states[input_light_ref].attributes }}'
+  brightness_on: !input brightness_on
+  smooth_power_on: !input smooth_power_on
+  smooth_power_off: !input smooth_power_off
+  color_temp_min: !input color_temp_min
+  color_temp_max: !input color_temp_max
+  color_temp_steps_short: !input color_temp_steps_short
+  color_temp_steps_long: !input color_temp_steps_long
+  color_temp_steps_short_calc: '{{ (color_temp_max - color_temp_min) / color_temp_steps_short }}'
+  color_temp_steps_long_calc: '{{ (color_temp_max - color_temp_min) / color_temp_steps_long }}'
+  color_temp_power_on: !input color_temp_power_on
+  color_temp_force_i: !input color_temp_force
+  color_temp_force: '{{ color_temp_force_i and "color_temp" in states[input_light_ref].attributes }}'
+  color_temp_on: !input color_temp_on
+mode: restart
+max_exceeded: silent
+trigger:
+  - trigger: event
+    event_type: !input event_id
+condition:
+  - condition: template
+    value_template: '{{ "controller" in trigger.event.data and (trigger.event.data.controller in controller_device or trigger.event.data.controller in controller_entity) }}'
+  - condition: template
+    value_template: '{{ input_controller_model != "Auto" or ("model" in trigger.event.data and trigger.event.data.model in controller_mapping) }}'
+action:
+  - variables:
+      controller_model: >-
+        {%- if input_controller_model == "Auto" -%}
+          {{ trigger.event.data.model }}
+        {%- else -%}
+          {{ input_controller_model }}
+        {%- endif -%}
+      # choose actions for buttons based on controller
+      toggle: '{{ controller_mapping[controller_model]["toggle"] | default(None) }}'
+      turn_on: '{{ controller_mapping[controller_model]["turn_on"] | default(None) }}'
+      turn_off: '{{ controller_mapping[controller_model]["turn_off"] | default(None) }}'
+      brightness_up: '{{ controller_mapping[controller_model]["brightness_up"] | default(None) }}'
+      brightness_up_repeat: '{{ controller_mapping[controller_model]["brightness_up_repeat"] | default(None) }}'
+      brightness_down: '{{ controller_mapping[controller_model]["brightness_down"] | default(None) }}'
+      brightness_down_repeat: '{{ controller_mapping[controller_model]["brightness_down_repeat"] | default(None) }}'
+      color_up: '{{ controller_mapping[controller_model]["color_up"] | default(None) }}'
+      color_up_repeat: '{{ controller_mapping[controller_model]["color_up_repeat"] | default(None) }}'
+      color_down: '{{ controller_mapping[controller_model]["color_down"] | default(None) }}'
+      color_down_repeat: '{{ controller_mapping[controller_model]["color_down_repeat"] | default(None) }}'
+      trigger_action: >-
+        {%- set ta = trigger.event.data.action -%}
+        {%- if ta == toggle -%}
+          {%- if states(input_light_ref) | lower == "on" -%}
+            turn_off
+          {%- else -%}
+            turn_on
+          {%- endif -%}
+        {%- else -%}
+          {{ ta }}
+        {%- endif -%}
+  - choose:
+      # TURN ON
+      - conditions:
+          - condition: template
+            value_template: '{{ (trigger_action == turn_on or trigger_action == "turn_on") and states(input_light_ref) == "off" }}'
+        sequence:
+          - choose:
+              # both force brightness and force color temperature is enabled
+              - conditions:
+                  - condition: template
+                    value_template: '{{ brightness_force and color_temp_force }}'
+                sequence:
+                  - service: light.turn_on
+                    data:
+                      entity_id: '{{ input_light }}'
+                      brightness: '{{ brightness_on }}'
+                      color_temp: '{{ color_temp_on }}'
+                      transition: '{{ light_transition_short / 1000 }}'
+              # force brightness is enabled but force color temperature is disabled
+              - conditions:
+                  - condition: template
+                    value_template: '{{ brightness_force and not color_temp_force }}'
+                sequence:
+                  - service: light.turn_on
+                    data:
+                      entity_id: '{{ input_light }}'
+                      brightness: '{{ brightness_on }}'
+                      transition: '{{ light_transition_short / 1000 }}'
+              # force brightness is disabled but force color temperature is enabled
+              - conditions:
+                  - condition: template
+                    value_template: '{{ not brightness_force and color_temp_force }}'
+                sequence:
+                  - service: light.turn_on
+                    data:
+                      entity_id: '{{ input_light }}'
+                      color_temp: '{{ color_temp_on }}'
+                      transition: '{{ light_transition_short / 1000 }}'
+            # both force brightness and force color temperature is disabled
+            default:
+              - service: light.turn_on
+                data:
+                  entity_id: '{{ input_light }}'
+                  brightness: !input brightness_on
+                  transition: '{{ light_transition_short / 1000 }}'
+      # TURN OFF
+      - conditions:
+          - condition: template
+            value_template: '{{ (trigger_action == turn_off or trigger_action == "turn_off") and states(input_light_ref) == "on" }}'
+        sequence:
+          - service: light.turn_off
+            data:
+              entity_id: '{{ input_light }}'
+              transition: '{{ light_transition_short / 1000 }}'
+      # BRIGHTNESS UP
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action == brightness_up and "brightness" in states[input_light_ref].attributes }}'
+        sequence:
+         # light is off
+          - if:
+              - condition: template
+                value_template: '{{ states(input_light_ref) == "off" }}'
+            then:
+              # delayed turn off is disabled (if enabled, no power on on brightness and color temperature buttons)
+              - if:
+                  - condition: template
+                    value_template: '{{ not delayed_turn_off_enable }}'
+                then:
+                  # smooth power on is disabled
+                  - if:
+                      - condition: template
+                        value_template: '{{ not smooth_power_on }}'
+                    then:
+                      # force color temperature on turn on is enabled
+                      - if:
+                          - condition: template
+                            value_template: '{{ color_temp_force }}'
+                        then:
+                          # force brightness on turn on is enabled
+                          - if:
+                              - condition: template
+                                value_template: '{{ brightness_force }}'
+                            then:
+                              - service: light.turn_on
+                                data:
+                                  entity_id: '{{ input_light }}'
+                                  brightness: '{{ brightness_on }}'
+                                  color_temp: '{{ color_temp_on }}'
+                                  transition: '{{ light_transition_short / 1000 }}'
+                            # force brightness on turn on is disabled
+                            else:
+                              - service: light.turn_on
+                                data:
+                                  entity_id: '{{ input_light }}'
+                                  color_temp: '{{ color_temp_on }}'
+                                  transition: '{{ light_transition_short / 1000 }}'
+                        # force color temperature on turn on is disabled
+                        else:
+                          # force brightness on turn on is enabled
+                          - if:
+                              - condition: template
+                                value_template: '{{ brightness_force }}'
+                            then:
+                              - service: light.turn_on
+                                data:
+                                  entity_id: '{{ input_light }}'
+                                  brightness: '{{ brightness_on }}'
+                                  transition: '{{ light_transition_short / 1000 }}'
+                            # force brightness on turn on is disabled
+                            else:
+                              - service: light.turn_on
+                                data:
+                                  entity_id: '{{ input_light }}'
+                                  transition: '{{ light_transition_short / 1000 }}'
+                    # smooth power on is enabled
+                    else:
+                      # force color temperature on turn on is enabled
+                      - if:
+                          - condition: template
+                            value_template: '{{ color_temp_force }}'
+                        then:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_min }}'
+                              color_temp: '{{ color_temp_on }}'
+                              transition: '{{ light_transition_short / 1000 }}'
+                        # force color temperature on turn on is disabled
+                        else:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_min }}'
+                              transition: '{{ light_transition_short / 1000 }}'
+            # light is on
+            else:
+              - choose:
+                  # if the brightness under the minimum, transition it to the minimum brightness
+                  - conditions:
+                      - condition: template
+                        value_template: '{{ state_attr(input_light_ref, "brightness") < brightness_min }}'
+                    sequence:
+                      - service: light.turn_on
+                        data:
+                          entity_id: '{{ input_light }}'
+                          brightness: '{{ brightness_min }}'
+                          transition: '{{ light_transition_short / 1000 }}'
+                  # else increase the brightness
+                  - conditions:
+                      - condition: template
+                        value_template: '{{ state_attr(input_light_ref, "brightness") < brightness_max }}'
+                    sequence:
+                      # set the brightness steps
+                      - variables:
+                          steps_bs: >-
+                            {%- set delta_b = brightness_max - brightness_min -%}
+                            {%- set chunk_bs = delta_b / brightness_steps_short -%}
+                            {%- set data = namespace(steps_bs = []) -%}
+                            {%- for i in range(0, brightness_steps_short + 1) -%}
+                              {%- set data.steps_bs = data.steps_bs + [(brightness_min + i * chunk_bs) | round(0) | int] -%}
+                            {%- endfor -%}
+                            {{ data.steps_bs }}
+                      - service: light.turn_on
+                        data:
+                          entity_id: '{{ input_light }}'
+                          brightness: '{{ (steps_bs | reject("<=", state_attr(input_light_ref, "brightness")) | list + [steps_bs | max]) | min }}'
+                          transition: '{{ light_transition_short / 1000 }}'
+      # BRIGHTNESS UP REPEAT
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action == brightness_up_repeat and "brightness" in states[input_light_ref].attributes }}'
+        sequence:
+          - variables:
+              steps_bl: >-
+                {%- set delta_b = brightness_max - brightness_min -%}
+                {%- set chunk_bl = delta_b / brightness_steps_long -%}
+                {%- set data = namespace(steps_bl = []) -%}
+                {%- for i in range(0, brightness_steps_long + 1) -%}
+                  {%- set data.steps_bl = data.steps_bl + [(brightness_min + i * chunk_bl) | round(0) | int] -%}
+                {%- endfor -%}
+                {{ data.steps_bl }}
+          - if:
+              - condition: template
+                value_template: '{{ states(input_light_ref) == "off" }}'
+            then:
+              # delayed turn off is disabled (if enabled, no power on on brightness and color temperature buttons)
+              - if:
+                  - condition: template
+                    value_template: '{{ not delayed_turn_off_enable }}'
+                then:
+                  # smooth power on is disabled
+                  - if:
+                      - condition: template
+                        value_template: '{{ not smooth_power_on }}'
+                    then:
+                      # force color temperature on turn on is enabled
+                      - if:
+                          - condition: template
+                            value_template: '{{ color_temp_force }}'
+                        then:
+                          # force brightness on turn on is enabled
+                          - if:
+                              - condition: template
+                                value_template: '{{ brightness_force }}'
+                            then:
+                              - service: light.turn_on
+                                data:
+                                  entity_id: '{{ input_light }}'
+                                  brightness: '{{ brightness_on }}'
+                                  color_temp: '{{ color_temp_on }}'
+                                  transition: '{{ light_transition_long / 1000 }}'
+                            # force brightness on turn on is disabled
+                            else:
+                              - service: light.turn_on
+                                data:
+                                  entity_id: '{{ input_light }}'
+                                  color_temp: '{{ color_temp_on }}'
+                                  transition: '{{ light_transition_long / 1000 }}'
+                        # force color temperature on turn on is disabled
+                        else:
+                          # force brightness on turn on is enabled
+                          - if:
+                              - condition: template
+                                value_template: '{{ brightness_force }}'
+                            then:
+                              - service: light.turn_on
+                                data:
+                                  entity_id: '{{ input_light }}'
+                                  brightness: '{{ brightness_on }}'
+                                  transition: '{{ light_transition_long / 1000 }}'
+                            # force brightness on turn on is disabled
+                            else:
+                              - service: light.turn_on
+                                data:
+                                  entity_id: '{{ input_light }}'
+                                  transition: '{{ light_transition_long / 1000 }}'
+                    # smooth power on is enabled
+                    else:
+                      # force color temperature on turn on is enabled
+                      - if:
+                          - condition: template
+                            value_template: '{{ color_temp_force }}'
+                        then:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_min }}'
+                              color_temp: '{{ color_temp_on }}'
+                              transition: '{{ light_transition_long / 1000 }}'
+                        # force color temperature on turn on is disabled
+                        else:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_min }}'
+                              transition: '{{ light_transition_long / 1000 }}'
+            # light is on
+            else:
+              - service: light.turn_on
+                data:
+                  entity_id: '{{ input_light }}'
+                  brightness: '{{ (steps_bl | reject("<=", state_attr(input_light_ref, "brightness")) | list + [steps_bl | max]) | min }}'
+                  transition: '{{ light_transition_long / 1000 }}'
+          - delay:
+              milliseconds: '{{ light_transition_long }}'
+          # if the light is on, move on to the loop for increasing the brightness
+          - if:
+              - condition: template
+                value_template: '{{ states(input_light_ref) == "on" }}'
+            then:
+              - repeat:
+                  while:
+                    - condition: template
+                      value_template: '{{ state_attr(input_light_ref, "brightness") < brightness_max }}'
+                  sequence:
+                    - service: light.turn_on
+                      data:
+                        entity_id: '{{ input_light }}'
+                        brightness: '{{ (steps_bl | reject("<=", state_attr(input_light_ref, "brightness")) | list + [steps_bl | max]) | min }}'
+                        transition: '{{ light_transition_long / 1000 }}'
+                    - delay:
+                        milliseconds: '{{ light_transition_long }}'
+      # BRIGHTNESS DOWN
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action == brightness_down and "brightness" in states[input_light_ref].attributes and states(input_light_ref) == "on" }}'
+        sequence:
+          - choose:
+              # if the light is on but over the maximum brightness, transition it to the maximum brightness
+              - conditions:
+                 - condition: template
+                   value_template: '{{ state_attr(input_light_ref, "brightness") > brightness_max }}'
+                sequence:
+                  - service: light.turn_on
+                    data:
+                      entity_id: '{{ input_light }}'
+                      brightness: '{{ brightness_max }}'
+                      transition: '{{ light_transition_short / 1000 }}'
+              # if the light is on but equal to or under the minimum brightness and smooth power off is enabled, turn it off
+              - conditions:
+                  - condition: template
+                    value_template: '{{ state_attr(input_light_ref, "brightness") <= brightness_min and smooth_power_off }}'
+                sequence:
+                  - service: light.turn_off
+                    data:
+                      entity_id: '{{ input_light }}'
+                      transition: '{{ light_transition_short / 1000 }}'
+              # else decrease its brightness
+              - conditions:
+                  - condition: template
+                    value_template: '{{ state_attr(input_light_ref, "brightness") > brightness_min }}'
+                sequence:
+                  # set the brightness steps
+                  - variables:
+                      steps_bs: >-
+                        {%- set delta_b = brightness_max - brightness_min -%}
+                        {%- set chunk_bs = delta_b / brightness_steps_short -%}
+                        {%- set data = namespace(steps_bs = []) -%}
+                        {%- for i in range(0, brightness_steps_short + 1) -%}
+                          {%- set data.steps_bs = data.steps_bs + [(brightness_min + i * chunk_bs) | round(0) | int] -%}
+                        {%- endfor -%}
+                        {{ data.steps_bs }}
+                  - service: light.turn_on
+                    data:
+                      entity_id: '{{ input_light }}'
+                      brightness: '{{ ([steps_bs | min] + steps_bs | reject(">=", state_attr(input_light_ref, "brightness")) | list) | max }}'
+                      transition: '{{ light_transition_short / 1000 }}'
+      # BRIGHTNESS DOWN REPEAT
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action == brightness_down_repeat and "brightness" in states[input_light_ref].attributes and states(input_light_ref) == "on" }}'
+        sequence:
+          - variables:
+              steps_bl: >-
+                {%- set delta_b = brightness_max - brightness_min -%}
+                {%- set chunk_bl = delta_b / brightness_steps_long -%}
+                {%- set data = namespace(steps_bl = []) -%}
+                {%- for i in range(0, brightness_steps_long + 1) -%}
+                  {%- set data.steps_bl = data.steps_bl + [(brightness_min + i * chunk_bl) | round(0) | int] -%}
+                {%- endfor -%}
+                {{ data.steps_bl }}
+          - if:
+              # using a separate sequence for the smooth power off feature to not perform unnecessary checks at every iteration when the feature is disabled
+              - condition: template
+                value_template: '{{ smooth_power_off }}'
+            then:
+              - repeat:
+                  # continue lowering brightness until the light turns off
+                  while:
+                    - condition: template
+                      value_template: '{{ states(input_light_ref) != "off" }}'
+                  sequence:
+                    # if the light is not at minimum brightness yet, lower the light's brightness
+                    - if:
+                        - condition: template
+                          value_template: '{{ state_attr(input_light_ref, "brightness") > brightness_min }}'
+                      then:
+                        - service: light.turn_on
+                          data:
+                            entity_id: '{{ input_light }}'
+                            brightness: '{{ ([steps_bl | min] + steps_bl | reject(">=", state_attr(input_light_ref, "brightness")) | list) | max }}'
+                            transition: '{{ light_transition_long / 1000 }}'
+                        - delay:
+                            milliseconds: '{{ light_transition_long }}'
+                      # else turn it off
+                      else:
+                        - service: light.turn_off
+                          data:
+                            entity_id: '{{ input_light }}'
+                            transition: '{{ light_transition_long / 1000 }}'
+            else:
+              - repeat:
+                  # continue lowering brightness until the light turns off
+                  while:
+                    - condition: template
+                      value_template: '{{ state_attr(input_light_ref, "brightness") > brightness_min }}'
+                  sequence:
+                    # lower the light's brightness. since smooth power off is disabled, never let the brightness move below the user-provided minimum
+                    - service: light.turn_on
+                      data:
+                        entity_id: '{{ input_light }}'
+                        brightness: '{{ ([steps_bl | min] + steps_bl | reject(">=", state_attr(input_light_ref, "brightness")) | list) | max }}'
+                        transition: '{{ light_transition_long / 1000 }}'
+                    - delay:
+                        milliseconds: '{{ light_transition_long }}'
+      # COLOR UP
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action == color_up and "color_temp" in states[input_light_ref].attributes }}'
+        sequence:
+          # light is off
+          - if:
+              - condition: template
+                value_template: '{{ states(input_light_ref) == "off"}}'
+            then:
+              # delayed turn off is disabled (if enabled, no power on on brightness and color temperature buttons)
+              - if:
+                  - condition: template
+                    value_template: '{{ not delayed_turn_off_enable and color_temp_power_on }}'
+                then:
+                  - choose:
+                      # both force brightness and force color temperature is enabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ brightness_force and color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_on }}'
+                              color_temp: '{{ color_temp_on }}'
+                              transition: '{{ light_transition_short / 1000 }}'
+                      # force brightness is enabled but force color temperature is disabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ brightness_force and not color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_on }}'
+                              transition: '{{ light_transition_short / 1000 }}'
+                      # force brightness is disabled but force color temperature is enabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ not brightness_force and color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              color_temp: '{{ color_temp_on }}'
+                              transition: '{{ light_transition_short / 1000 }}'
+                    # both force brightness and force color temperature is disabled
+                    default:
+                      - service: light.turn_on
+                        data:
+                          entity_id: '{{ input_light }}'
+                          transition: '{{ light_transition_short / 1000 }}'
+            # light is on
+            else:
+              - if:
+                  - condition: template
+                    value_template: '{{ state_attr(input_light_ref, "color_temp") < color_temp_max }}'
+                then:
+                  - variables:
+                      steps_cs: >-
+                        {%- set delta_c = color_temp_max - color_temp_min -%}
+                        {%- set chunk_cs = delta_c / color_temp_steps_short -%}
+                        {%- set data = namespace(steps_cs = []) -%}
+                        {%- for i in range(0, color_temp_steps_short + 1) -%}
+                          {%- set data.steps_cs = data.steps_cs + [(color_temp_min + i * chunk_cs) | round(0) | int] -%}
+                        {%- endfor -%}
+                        {{ data.steps_cs }}
+                  - service: light.turn_on
+                    data:
+                      entity_id: '{{ input_light }}'
+                      color_temp: '{{ (steps_cs | reject("<=", state_attr(input_light_ref, "color_temp")) | list + [steps_cs | max]) | min }}'
+                      transition: '{{ light_transition_short / 1000 }}'
+      # COLOR UP REPEAT
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action == color_up_repeat and "color_temp" in states[input_light_ref].attributes }}'
+        sequence:
+          - variables:
+              steps_cl: >-
+                {%- set delta_c = color_temp_max - color_temp_min -%}
+                {%- set chunk_cl = delta_c / color_temp_steps_long -%}
+                {%- set data = namespace(steps_cl = []) -%}
+                {%- for i in range(0, color_temp_steps_long + 1) -%}
+                  {%- set data.steps_cl = data.steps_cl + [(color_temp_min + i * chunk_cl) | round(0) | int] -%}
+                {%- endfor -%}
+                {{ data.steps_cl }}
+          # light is off
+          - if:
+              - condition: template
+                value_template: '{{ states(input_light_ref) == "off"}}'
+            then:
+              # delayed turn off is disabled (if enabled, no power on on brightness and color temperature buttons)
+              - if:
+                  - condition: template
+                    value_template: '{{ not delayed_turn_off_enable and color_temp_power_on }}'
+                then:
+                  - choose:
+                      # both force brightness and force color temperature is enabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ brightness_force and color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_on }}'
+                              color_temp: '{{ color_temp_on }}'
+                              transition: '{{ light_transition_long / 1000 }}'
+                      # force brightness is enabled but force color temperature is disabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ brightness_force and not color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_on }}'
+                              transition: '{{ light_transition_long / 1000 }}'
+                      # force brightness is disabled but force color temperature is enabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ not brightness_force and color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              color_temp: '{{ color_temp_on }}'
+                              transition: '{{ light_transition_long / 1000 }}'
+                    # both force brightness and force color temperature is disabled
+                    default:
+                      - service: light.turn_on
+                        data:
+                          entity_id: '{{ input_light }}'
+                          transition: '{{ light_transition_long / 1000 }}'
+            # light is on
+            else:
+              - service: light.turn_on
+                data:
+                  entity_id: '{{ input_light }}'
+                  color_temp: '{{ (steps_cl | reject("<=", state_attr(input_light_ref, "color_temp")) | list + [steps_cl | max]) | min }}'
+                  transition: '{{ light_transition_long / 1000 }}'
+          - delay:
+              milliseconds: '{{ light_transition_long }}'
+          # if the light is on, move on to the loop for increasing the color temperature
+          - if:
+              - condition: template
+                value_template: '{{ states(input_light_ref) == "on" }}'
+            then:
+              - repeat:
+                  while:
+                    - condition: template
+                      value_template: '{{ state_attr(input_light_ref, "color_temp") < color_temp_max }}'
+                  sequence:
+                    - service: light.turn_on
+                      data:
+                        entity_id: '{{ input_light }}'
+                        color_temp: '{{ (steps_cl | reject("<=", state_attr(input_light_ref, "color_temp")) | list + [steps_cl | max]) | min }}'
+                        transition: '{{ light_transition_long / 1000 }}'
+                    - delay:
+                        milliseconds: '{{ light_transition_long }}'
+      # COLOR DOWN
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action == color_down and "color_temp" in states[input_light_ref].attributes }}'
+        sequence:
+          # light is off
+          - if:
+              - condition: template
+                value_template: '{{ states(input_light_ref) == "off"}}'
+            then:
+              # delayed turn off is disabled (if enabled, no power on on brightness and color temperature buttons)
+              - if:
+                  - condition: template
+                    value_template: '{{ not delayed_turn_off_enable and color_temp_power_on }}'
+                then:
+                  - choose:
+                      # both force brightness and force color temperature is enabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ brightness_force and color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_on }}'
+                              color_temp: '{{ color_temp_on }}'
+                              transition: '{{ light_transition_short / 1000 }}'
+                      # force brightness is enabled but force color temperature is disabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ brightness_force and not color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_on }}'
+                              transition: '{{ light_transition_short / 1000 }}'
+                      # force brightness is disabled but force color temperature is enabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ not brightness_force and color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              color_temp: '{{ color_temp_on }}'
+                              transition: '{{ light_transition_short / 1000 }}'
+                    # both force brightness and force color temperature is disabled
+                    default:
+                      - service: light.turn_on
+                        data:
+                          entity_id: '{{ input_light }}'
+                          transition: '{{ light_transition_short / 1000 }}'
+            else:
+              - if:
+                  - condition: template
+                    value_template: '{{ state_attr(input_light_ref, "color_temp") > color_temp_min }}'
+                then:
+                  - variables:
+                      steps_cs: >-
+                        {%- set delta_c = color_temp_max - color_temp_min -%}
+                        {%- set chunk_cs = delta_c / color_temp_steps_short -%}
+                        {%- set data = namespace(steps_cs = []) -%}
+                        {%- for i in range(0, color_temp_steps_short + 1) -%}
+                          {%- set data.steps_cs = data.steps_cs + [(color_temp_min + i * chunk_cs) | round(0) | int] -%}
+                        {%- endfor -%}
+                        {{ data.steps_cs }}
+                  - service: light.turn_on
+                    data:
+                      entity_id: '{{ input_light }}'
+                      color_temp: '{{ ([steps_cs | min] + steps_cs | reject(">=", state_attr(input_light_ref, "color_temp")) | list) | max }}'
+                      transition: '{{ light_transition_short / 1000 }}'
+      # COLOR DOWN REPEAT
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger_action == color_down_repeat and "color_temp" in states[input_light_ref].attributes }}'
+        sequence:
+          - variables:
+              steps_cl: >-
+                {%- set delta_c = color_temp_max - color_temp_min -%}
+                {%- set chunk_cl = delta_c / color_temp_steps_long -%}
+                {%- set data = namespace(steps_cl = []) -%}
+                {%- for i in range(0, color_temp_steps_long + 1) -%}
+                  {%- set data.steps_cl = data.steps_cl + [(color_temp_min + i * chunk_cl) | round(0) | int] -%}
+                {%- endfor -%}
+                {{ data.steps_cl }}
+          # light is off
+          - if:
+              - condition: template
+                value_template: '{{ states(input_light_ref) == "off"}}'
+            then:
+              # delayed turn off is disabled (if enabled, no power on on brightness and color temperature buttons)
+              - if:
+                  - condition: template
+                    value_template: '{{ not delayed_turn_off_enable and color_temp_power_on }}'
+                then:
+                  - choose:
+                      # both force brightness and force color temperature is enabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ brightness_force and color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_on }}'
+                              color_temp: '{{ color_temp_on }}'
+                              transition: '{{ light_transition_long / 1000 }}'
+                      # force brightness is enabled but force color temperature is disabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ brightness_force and not color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              brightness: '{{ brightness_on }}'
+                              transition: '{{ light_transition_long / 1000 }}'
+                      # force brightness is disabled but force color temperature is enabled
+                      - conditions:
+                          - condition: template
+                            value_template: '{{ not brightness_force and color_temp_force }}'
+                        sequence:
+                          - service: light.turn_on
+                            data:
+                              entity_id: '{{ input_light }}'
+                              color_temp: '{{ color_temp_on }}'
+                              transition: '{{ light_transition_long / 1000 }}'
+                    # both force brightness and force color temperature is disabled
+                    default:
+                      - service: light.turn_on
+                        data:
+                          entity_id: '{{ input_light }}'
+                          transition: '{{ light_transition_long / 1000 }}'
+            # light is on
+            else:
+              - service: light.turn_on
+                data:
+                  entity_id: '{{ input_light }}'
+                  color_temp: '{{ ([steps_cl | min] + steps_cl | reject(">=", state_attr(input_light_ref, "color_temp")) | list) | max }}'
+                  transition: '{{ light_transition_long / 1000 }}'
+          - delay:
+              milliseconds: '{{ light_transition_long }}'
+          # if the light is on, move on to the loop for increasing the color temperature
+          - if:
+              - condition: template
+                value_template: '{{ states(input_light_ref) == "on" }}'
+            then:
+              - repeat:
+                  while:
+                    - condition: template
+                      value_template: '{{ state_attr(input_light_ref, "color_temp") > color_temp_min }}'
+                  sequence:
+                    - service: light.turn_on
+                      data:
+                        entity_id: '{{ input_light }}'
+                        color_temp: '{{ ([steps_cl | min] + steps_cl | reject(">=", state_attr(input_light_ref, "color_temp")) | list) | max }}'
+                        transition: '{{ light_transition_long / 1000 }}'
+                    - delay:
+                        milliseconds: '{{ light_transition_long }}'
+  # DELAYED TURN OFF
+  - if:
+      - condition: template
+        value_template: '{{ delayed_turn_off_enable and (trigger_action == "turn_on" or trigger_action == turn_on) }}'
+    then:
+      - delay:
+          milliseconds: '{{ delayed_turn_off_interval * 1000 - light_transition_short }}'
+      - service: light.turn_off
+        data:
+          entity_id: '{{ input_light }}'
+          transition: '{{ light_transition_short / 1000 }}'
