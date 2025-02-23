@@ -1,4 +1,6 @@
 # Blueprint metadata
+# TODOs:
+# - if delayed turn off is enabled, double press turns on permanently (settable, helper)
 blueprint:
   name: Advanced Hook for Lights with only On/Off Functionality - Primary as Reference - v2025.01
   description: |
@@ -20,7 +22,7 @@ blueprint:
     
     The script is based on the [Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints) project.
     
-    Version: 2025.01-2025.02.13
+    Version: 2025.01-2025.02.23
   source_url: https://github.com/zeolyth/home_assistant_blueprints/blob/main/hook_on_off_lights_par_v2025.01.yaml
   domain: automation
   homeassistant:
@@ -144,6 +146,12 @@ blueprint:
             number:
               unit_of_measurement: seconds
               mode: box
+        delayed_turn_off_include_motion:
+          name: Enable delayed turn off for motion sensors too
+          description: When a motion sensor turns on the light, it will turn off regardless of whether the motion sensor is still active.
+          default: false
+          selector:
+            boolean:
 # Automation schema
 variables:
   # convert blueprint inputs into variables to be used in templates
@@ -302,6 +310,8 @@ variables:
       color_up: button_double
   delayed_turn_off_enable: !input delayed_turn_off_enable
   delayed_turn_off_interval: !input delayed_turn_off_interval
+  delayed_turn_off_include_motion: !input delayed_turn_off_include_motion
+  controller_model_motion_sensor: Motion Sensor
 mode: restart
 max_exceeded: silent
 trigger:
@@ -356,6 +366,8 @@ action:
   - if:
       - condition: template
         value_template: '{{ delayed_turn_off_enable and (trigger_action == "turn_on" or trigger_action == turn_on) }}'
+      - condition: template
+        value_template: '{{ controller_model != controller_model_motion_sensor or delayed_turn_off_include_motion }}'
     then:
       - delay:
           milliseconds: '{{ delayed_turn_off_interval * 1000 - light_transition_short }}'

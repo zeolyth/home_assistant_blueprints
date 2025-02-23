@@ -16,7 +16,7 @@ blueprint:
     
     The script is based on the [Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints) project.
     
-    Version: 2025.01-2025.02.13
+    Version: 2025.01-2025.02.23
   source_url: https://github.com/zeolyth/home_assistant_blueprints/blob/main/controller_binary_sensor_v2025.01.yaml
   domain: automation
   homeassistant:
@@ -43,6 +43,16 @@ blueprint:
             
             Only compatible with zeolyth controllers and hooks!
           default: ahb_controller_event
+        motion_sensor:
+          name: The entity is a motion or presence sensor
+          description: |-
+            Enable it if the controller entity is a motion or presence sensor.
+            
+            If enabled, the controller will send a special controller model identifier in the event data to distinguish it from other binary sensors.
+            With this setting you can disable the delayed turn off function for motion sensors in light hooks.
+          default: true
+          selector:
+            boolean:
     # state_on actions
     state_on:
       name: On state unique actions
@@ -85,7 +95,9 @@ variables:
   # build data to send within a controller event
   controller_entity: !input controller_entity
   controller_id: '{{controller_entity}}'
-  controller_model: Binary Sensor
+  motion_sensor: !input motion_sensor
+  controller_model_standard: Binary Sensor
+  controller_model_motion: Motion Sensor
   # state variables
   state_on_trigger: !input state_on_trigger
   state_off_trigger: !input state_off_trigger
@@ -127,7 +139,7 @@ action:
                 event_data:
                   controller: '{{ controller_id }}'
                   action: state_on
-                  model: '{{ controller_model }}'
+                  model: '{{ controller_model_motion if motion_sensor else controller_model_standard }}'
           # run the custom action
           - choose:
               - conditions: []
@@ -143,7 +155,7 @@ action:
                 event_data:
                   controller: '{{ controller_id }}'
                   action: state_off
-                  model: '{{ controller_model }}'
+                  model: '{{ controller_model_motion if motion_sensor else controller_model_standard }}'
           # run the custom action
           - choose:
               - conditions: []
