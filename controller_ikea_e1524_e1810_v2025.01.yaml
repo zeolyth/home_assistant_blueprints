@@ -14,7 +14,7 @@ blueprint:
     
     The script is based on the [Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints) project.
     
-    Version: 2025.01-2025.02.13
+    Version: 2025.01-2025.03.03
   source_url: https://github.com/zeolyth/home_assistant_blueprints/blob/main/controller_ikea_e1524_e1810_v2025.01.yaml
   domain: automation
   homeassistant:
@@ -741,12 +741,16 @@ action:
           # need to check the previous button event, stored in the provided input_text
             value_template: '{{ trigger_action | string == button_up_release and last_controller_event | string == button_up_long }}'
         sequence:
-          # fire the release event
-          - event: !input event_id
-            event_data:
-              controller: '{{ controller_id }}'
-              action: button_up_release
-              model: '{{ controller_model }}'
+          # if long loop is enabled fire the release event
+          - if:
+              - condition: template
+                value_template: '{{ button_up_long_loop }}'
+            then:
+              - event: !input event_id
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: button_up_release
+                  model: '{{ controller_model }}'
           # run the release custom action
           - sequence: !input button_up_release_action
       # BUTTON DOWN SHORT
@@ -855,12 +859,16 @@ action:
           # need to check the previous button event, stored in the provided input_text
             value_template: '{{ trigger_action | string == button_down_release and last_controller_event | string == button_down_long }}'
         sequence:
-          # fire the release event
-          - event: !input event_id
-            event_data:
-              controller: '{{ controller_id }}'
-              action: button_down_release
-              model: '{{ controller_model }}'
+          # if long loop is enabled fire the release event
+          - if:
+              - condition: template
+                value_template: '{{ button_down_long_loop }}'
+            then:
+              - event: !input event_id
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: button_down_release
+                  model: '{{ controller_model }}'
           # run the release custom action
           - sequence: !input button_down_release_action
       # BUTTON LEFT SHORT
@@ -969,10 +977,10 @@ action:
           # need to check the previous button event, stored in the provided input_text
             value_template: '{{ trigger_action | string == button_left_release and last_controller_event | string == button_left_long }}'
         sequence:
-          # if trigger is enabled fire the release event
+          # if long loop is enabled fire the release event
           - if:
               - condition: template
-                value_template: '{{ button_left_release_trigger }}'
+                value_template: '{{ button_left_long_loop }}'
             then:
               - event: !input event_id
                 event_data:
@@ -1087,10 +1095,10 @@ action:
           # need to check the previous button event, stored in the provided input_text
             value_template: '{{ trigger_action | string == button_right_release and last_controller_event | string == button_right_long }}'
         sequence:
-          # if trigger is enabled fire the release event
+          # if long loop is enabled fire the release event
           - if:
               - condition: template
-                value_template: '{{ button_right_release_trigger }}'
+                value_template: '{{ button_right_long_loop }}'
             then:
               - event: !input event_id
                 event_data:
